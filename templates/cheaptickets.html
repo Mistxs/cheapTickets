@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="{{ url_for('static', filename='cheap/js/jquery-3.3.1.min.js') }}"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+
+
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/rome.css') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/dpicker.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/rescal.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='cheap/style.css') }}">
+
+
+    <title>CheapTicket - Поиск дешевых РЖД билетов</title>
+
+
+
+	</head>
+	<body>
+
+    <header>
+        <nav class="navbar navbar-light bg-light shadow-lg glass-container">
+            <div class="container">
+                <div class="col-md-3">
+                    <a class="navbar-brand" href="#">
+                        <img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="100px" alt="Логотип">
+                    </a>
+                </div>
+                <div class="col-md-6 text-center">
+                    <h4 style="font-family: 'Lato', Arial, sans-serif;">
+                        <span style="color: #333; font-weight: bold;">Выгодные</span>
+                        <span style="color: #333;">РЖД билеты</span>
+                    </h4>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="glass-container dark m-4 row mainform">
+          <input type="text" class="col-md-3 col-12 mb-3 city-input form-control rounded-left" id="city1-input" placeholder="Станция отправления" data-city-id="">
+          <input type="text" class="col-md-3 col-12 mb-3 city-input form-control" id="city2-input" placeholder="Станция прибытия" data-city-id="">
+          <input type="text" class="col-md-3 col-12 mb-3 form-control" id="start_date" placeholder="Поиск с"  autocomplete="off">
+          <input type="text" class="col-md-3 col-12 mb-3 form-control rounded-right" id="end_date" placeholder="Поиск до"  autocomplete="off">
+          <input type="submit" class="form-control btn btn-primary" id="search_button" value="Найти билеты">
+			<div class="progress">
+  				<div id="progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+			</div>
+        </div>
+
+		<div class="glass-container favourite dark m-4 row">
+			<span class="lead">Популярные направления</span>
+			<p>
+				<a href="#"><span data-favourite="SPB-MOS">Санкт Петербург - Москва</span></a>
+				<a href="#"><span data-favourite="MOS-SAR">Москва - Саратов</span></a>
+				<a href="#"><span data-favourite="SAR-MOS">Саратов - Москва</span></a>
+			</p>
+		</div>
+
+
+		<div class="row justify-content-center glass-container dark m-4">
+			<div class="col-md-4">
+				<span class="lead">
+					Выберите тип вагона
+<!--					<span class="station">или оставьте самый дешевый для поиска минимальной цены на поездку</span>-->
+				</span>
+			</div>
+			<div class="col-md-4 ">
+				<select id="wagonTypeSelector"  class=" form-select">
+									<option value="Самый дешевый">Самый дешевый</option>
+									<option value="КУПЕ">Купе</option>
+									<option value="ПЛАЦ">Плацкарт</option>
+									<option value="СИД">Сидячие</option>
+									<option value="СВ">СВ</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="row m-4 resrow">
+
+								<div class="elegant-calencar d-md-flex">
+
+									<div class="wrap-header d-flex calwrapper">
+										<div id="header" class="p-0">
+											<div class="head-info">
+												<div class="head-day"></div>
+												<div class="head-month"></div>
+												<div class="ticket-info"></div>
+											</div>
+										</div>
+							  		</div>
+
+
+
+							  <div class="calendar-wrap">
+								<div class="w-100 button-wrap">
+									<div class="pre-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-left"></i></div>
+
+									<div class="next-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-right"></i></div>
+								</div>
+								<table id="calendar">
+								<thead>
+									<tr>
+									<th>ПН</th>
+									<th>ВТ</th>
+									<th>СР</th>
+									<th>ЧТ</th>
+									<th>ПТ</th>
+									<th>СБ</th>
+									<th>ВС</th>
+									</tr>
+								</thead>
+								<tbody>
+								<tr>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								</tr>
+								<tr>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								</tr>
+								<tr>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								</tr>
+								<tr>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								</tr>
+								<tr>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								</tr>
+								<tr>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								  <td></td>
+								</tr>
+								</tbody>
+								</table>
+							  </div>
+							</div>
+		</div>
+
+
+
+    </div>
+
+
+
+
+
+
+
+<script src="{{ url_for('static', filename='cheap/js/jquery-3.3.1.min.js') }}"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="{{ url_for('static', filename='cheap/js/rome.js') }}"></script>
+<script src="{{ url_for('static', filename='cheap/js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='cheap/script.js') }}" ></script>
+
+
+	    <script>
+        const favourites = {
+            'SPB-MOS': { city1: '2004000', city1name: 'САНКТ-ПЕТЕРБУРГ', city2: '2000000', city2name: 'МОСКВА', startDate: '28-08-2023', endDate: '03-09-2023' },
+            'MOS-SAR': { city1: '2000000', city1name: 'МОСКВА', city2: '2020000', city2name: 'САРАТОВ 1 ПАСС', startDate: '18-08-2023', endDate: '19-08-2023' }, // Здесь подставьте данные
+            'SAR-MOS': { city1: '2020000', city1name: 'САРАТОВ 1 ПАСС', city2: '2000000', city2name: 'МОСКВА', startDate: '14-08-2023', endDate: '14-08-2023' }, // Здесь подставьте данные
+
+        };
+
+        document.querySelectorAll('[data-favourite]').forEach(span => {
+            span.addEventListener('click', function(event) {
+                event.preventDefault();
+                const favouriteKey = this.getAttribute('data-favourite');
+                const favouriteData = favourites[favouriteKey];
+
+                document.getElementById('city1-input').setAttribute('data-city-id', favouriteData.city1);
+                document.getElementById('city2-input').setAttribute('data-city-id', favouriteData.city2);
+                document.getElementById('city1-input').value = favouriteData.city1name;
+                document.getElementById('city2-input').value = favouriteData.city2name;
+                document.getElementById('start_date').value = favouriteData.startDate;
+                document.getElementById('end_date').value = favouriteData.endDate;
+            });
+        });
+
+    </script>
+	</body>
+</html>
+

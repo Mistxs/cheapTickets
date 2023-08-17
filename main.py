@@ -36,54 +36,93 @@ def rzdfind(date):
   response = requests.request("POST", url, headers=headers, data=payload).json()
   return response
 
-def getprice(data):
+# def getprice(data,current_date_str):
+#     min_prices = {}
+#     for item in data["Trains"]:
+#       vagon = item["CarGroups"]
+#       for _ in vagon:
+#         if _['CarTypeName'] == "ПЛАЦ":
+#           date = current_date_str
+#           train = item["DisplayTrainNumber"]
+#           arrival = item["ArrivalDateTime"]
+#           departure = item["DepartureDateTime"]
+#           price = _['MinPrice']
+#
+#           if date in min_prices:
+#             if price < min_prices[date]["price"]:
+#               min_prices[date] = {
+#                 "date": date,
+#                 "train": train,
+#                 "Arrival": arrival,
+#                 "Departure": departure,
+#                 "price": price
+#               }
+#           else:
+#             min_prices[date] = {
+#               "date": date,
+#               "train": train,
+#               "Arrival": arrival,
+#               "Departure": departure,
+#               "price": price
+#             }
+#     return min_prices
+
+def getprice(data, current_date_str):
+    min_prices = {}
     for item in data["Trains"]:
       vagon = item["CarGroups"]
       for _ in vagon:
-        if _['CarTypeName'] == "ПЛАЦ":
-          date = current_date_str
-          train = item["DisplayTrainNumber"]
-          arrival = item["ArrivalDateTime"]
-          departure = item["DepartureDateTime"]
-          price = _['MinPrice']
+        date = current_date_str
+        train = item["DisplayTrainNumber"]
+        arrival = item["ArrivalDateTime"]
+        departure = item["DepartureDateTime"]
+        price = _['MinPrice']
+        vagon_type = _['CarTypeName']
+        disabledpersonflag = _["HasPlacesForDisabledPersons"]
 
-          if date in min_prices:
-            if price < min_prices[date]["price"]:
-              min_prices[date] = {
-                "date": date,
-                "train": train,
-                "Arrival": arrival,
-                "Departure": departure,
-                "price": price
-              }
-          else:
-            min_prices[date] = {
-              "date": date,
-              "train": train,
-              "Arrival": arrival,
-              "Departure": departure,
-              "price": price
-            }
+        if date not in min_prices:
+          min_prices[date] = {}
+
+        if vagon_type not in min_prices[date]:
+          min_prices[date][vagon_type] = {}
 
 
-start_date = datetime.strptime("2023-08-01", "%Y-%m-%d")
-end_date = datetime.strptime("2023-11-30", "%Y-%m-%d")
+        if not disabledpersonflag and ("price" not in min_prices[date][vagon_type] or price < min_prices[date][vagon_type]["price"]):
+          min_prices[date][vagon_type] = {
+            "train": train,
+            "departure" : departure,
+            "arrival": arrival,
+            "price": price
 
-a = []
-min_prices = {}
-current_date = start_date
+          }
 
+    return min_prices
 
-while current_date <= end_date:
+def startfind():
+  start_date = datetime.strptime("2023-10-10", "%Y-%m-%d")
+  end_date = datetime.strptime("2023-10-12", "%Y-%m-%d")
+
+  a = []
+  min_prices_cal = {}
+
+  current_date = start_date
+
+  while current_date <= end_date:
     current_date_str = current_date.strftime("%Y-%m-%dT%H:%M:%S")
     data = rzdfind(current_date_str)
-    getprice(data)
+    min_prices_cal.update(getprice(data,current_date_str))
     current_date += timedelta(days=1)
     print(current_date_str)
 
-a = list(min_prices.values())
+  print(min_prices_cal)
+  # a = list(min_prices_cal.values())
+  #
+  # filtered_data = [d for d in a if d['price'] < 1800]
+  #
+  # for item in filtered_data:
+  #   print(item)
 
-filtered_data = [d for d in a if d['price'] < 1800]
 
-for item in filtered_data:
-    print(item)
+
+startfind()
+

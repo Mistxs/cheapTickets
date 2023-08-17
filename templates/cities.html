@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="{{ url_for('static', filename='cheap/js/jquery-3.3.1.min.js') }}"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/style.css') }}">
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/rome.css') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/dpicker.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/rescal.css') }}">
+
+    <title>Demo. CheapTicket</title>
+	</head>
+	<body>
+
+    <header>
+        <nav class="navbar navbar-light bg-light shadow-lg glass-container">
+            <div class="container">
+                <div class="col-md-3">
+                    <a class="navbar-brand" href="#">
+                        <img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="100px" alt="Логотип">
+                    </a>
+                </div>
+                <div class="col-md-6 text-center">
+                    <h4 style="font-family: 'Lato', Arial, sans-serif;">
+                        <span style="color: #333; font-weight: bold;">Выгодные</span>
+                        <span style="color: #333;">РЖД билеты</span>
+                    </h4>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="glass-container m-4 row">
+          <input type="text" class="col-md-3 col-12 mb-3 city-input form-control rounded-left" id="city1-input" placeholder="Станция отправления" data-city-id="">
+          <input type="text" class="col-md-3 col-12 mb-3 city-input form-control" id="city2-input" placeholder="Станция прибытия" data-city-id="">
+          <input type="text" class="col-md-3 col-12 mb-3 form-control" id="start_date" placeholder="Поиск с"  autocomplete="off">
+          <input type="text" class="col-md-3 col-12 mb-3 form-control rounded-right" id="end_date" placeholder="Поиск до"  autocomplete="off">
+          <input type="submit" class="form-control btn btn-primary" id="search_button" value="Найти билеты">
+        </div>
+    </div>
+
+    <div id="progress" style="display: none;">
+        <progress id="progress_bar" value="0" max="100"></progress>
+    </div>
+
+	<div class="row">
+				<div class="col-md-12">
+					<div class="elegant-calencar d-md-flex">
+						<div class="wrap-header d-flex">
+				      <p id="reset">Today</p>
+			        <div id="header" class="p-0">
+								<!-- <div class="pre-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-left"></i></div> -->
+		            <div class="head-info">
+		            	<div class="head-month"></div>
+		                <div class="head-day"></div>
+		            </div>
+		            <!-- <div class="next-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-right"></i></div> -->
+			        </div>
+			      </div>
+			      <div class="calendar-wrap">
+			      	<div class="w-100 button-wrap">
+				      	<div class="pre-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-left"></i></div>
+				      	<div class="next-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-right"></i></div>
+			      	</div>
+			        <table id="calendar">
+		            <thead>
+		                <tr>
+	                    <th>ПН</th>
+	                    <th>ВТ</th>
+	                    <th>СР</th>
+	                    <th>ЧТ</th>
+	                    <th>ПТ</th>
+	                    <th>СБ</th>
+	                    <th>ВС</th>
+		                </tr>
+		            </thead>
+		            <tbody>
+	                <tr>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                </tr>
+	                <tr>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                </tr>
+	                <tr>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                </tr>
+	                <tr>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                </tr>
+	                <tr>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                </tr>
+	                <tr>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                  <td></td>
+	                </tr>
+		            </tbody>
+			        </table>
+			      </div>
+			    </div>
+				</div>
+			</div>
+
+
+<script src="{{ url_for('static', filename='cheap/js/jquery-3.3.1.min.js') }}"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="{{ url_for('static', filename='cheap/js/rome.js') }}"></script>
+<script src="{{ url_for('static', filename='cheap/js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='cheap/script.js') }}" ></script>
+	</body>
+</html>
+
