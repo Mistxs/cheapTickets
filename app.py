@@ -106,6 +106,19 @@ def autocomplete():
     city_list = [{'label': city['cyrname'], 'value': city['id']} for city in result]
     return jsonify(city_list)
 
+@app.route('/predata')
+def predata():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    cityfrom = request.args.get('city1')
+    cityto = request.args.get('city2')
+
+    iso_start_date = datetime.strptime(start_date, "%d-%m-%Y")
+    iso_end_date = datetime.strptime(end_date, "%d-%m-%Y")
+
+    initial_train_data = get_train_data(iso_start_date, iso_end_date, cityfrom, cityto)
+    print(initial_train_data)
+    return jsonify(initial_train_data)
 
 
 @app.route('/search')
@@ -117,8 +130,6 @@ def search():
 
     iso_start_date = datetime.strptime(start_date, "%d-%m-%Y")
     iso_end_date = datetime.strptime(end_date, "%d-%m-%Y")
-
-    print(get_train_data(iso_start_date, iso_end_date, cityfrom, cityto))
 
     return Response(event_stream(iso_start_date, iso_end_date, cityfrom, cityto), content_type="text/event-stream")
 
@@ -210,13 +221,7 @@ def get_train_data(datefrom, dateto, cityfrom, cityto):
             'price': price
         }
 
-    progress_data = {
-            'progress': 100.0,
-            'data': json_data
-        }
-
-    yield f"data: {json.dumps(progress_data)}\n\n"
-    print(progress_data)
+    return json_data
 
 def save_tickets_to_db(min_prices_cal, departure_station_id, arrival_station_id):
     connection = pymysql.connect(**db_params)

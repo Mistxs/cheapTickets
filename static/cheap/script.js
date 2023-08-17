@@ -6,40 +6,42 @@ $(document).ready(function() {
 
 
     $('#search_button').on('click', function() {
-        var start_date = $('#start_date').val();
-        var end_date = $('#end_date').val();
-        var city1Id = $('#city1-input').attr('data-city-id');
-        var city2Id = $('#city2-input').attr('data-city-id');
+    var start_date = $('#start_date').val();
+    var end_date = $('#end_date').val();
+    var city1Id = $('#city1-input').attr('data-city-id');
+    var city2Id = $('#city2-input').attr('data-city-id');
 
-        var wagonTypeSelector = document.getElementById('wagonTypeSelector');
-        var calendarTable = document.getElementById('calendar');
-        var selectedWagonType = wagonTypeSelector.value;
+    var wagonTypeSelector = document.getElementById('wagonTypeSelector');
+    var selectedWagonType = wagonTypeSelector.value;
 
+    $('.progress').show();
 
-        $('.progress').show();
+    $('#oldres tbody').empty();
 
-        $('#oldres tbody').empty();
+    fetch(`/predata?start_date=${start_date}&end_date=${end_date}&city1=${city1Id}&city2=${city2Id}`)
+        .then(response => response.json())
+        .then(initialData => {
+            displayResults(initialData, selectedWagonType);
+            $('.resrow').show();
+            document.getElementById("calendar").scrollIntoView({ behavior: "smooth" });
 
-        var eventSource = new EventSource(`/search?start_date=${start_date}&end_date=${end_date}&city1=${city1Id}&city2=${city2Id}`, { withCredentials: true });
+            var eventSource = new EventSource(`/search?start_date=${start_date}&end_date=${end_date}&city1=${city1Id}&city2=${city2Id}`, { withCredentials: true });
 
-        eventSource.onmessage = function(event) {
-            var response = JSON.parse(event.data);
-            var progress = response.progress;
-            $('#progress').width(progress + '%');
-
-            if (progress === 100) {
-                eventSource.close();
-                $('.progress').hide();
-
+            eventSource.onmessage = function(event) {
+                var response = JSON.parse(event.data);
+                var progress = response.progress;
+                $('#progress').width(progress + '%');
                 var data = response.data;
                 displayResults(data, selectedWagonType);
-                $('.resrow').show();
-                document.getElementById("calendar").scrollIntoView({ behavior: "smooth" });
-            }
-        };
 
+                if (progress === 100) {
+                    eventSource.close();
+                    $('.progress').hide();
+                }
+            };
+        });
+});
 
-    });
 
 
     $(function () {
