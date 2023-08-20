@@ -1,12 +1,11 @@
 import json
+import time
 from datetime import datetime, timedelta
 
 import pymysql
 import requests
 from flask import Flask, render_template, request, jsonify, Response
-import time
-import random
-
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 def rzdfind(date,cityfrom, cityto):
   url = "https://ticket.rzd.ru/apib2b/p/Railway/V1/Search/TrainPricing?service_provider=B2B_RZD"
@@ -89,8 +88,6 @@ app = Flask(__name__)
 def index():
     return render_template('cheaptickets.html')
 
-
-
 @app.route('/autocomplete', methods=['GET'])
 def autocomplete():
     search = request.args.get('search')
@@ -115,9 +112,7 @@ def predata():
 
     iso_start_date = datetime.strptime(start_date, "%d-%m-%Y")
     iso_end_date = datetime.strptime(end_date, "%d-%m-%Y")
-
     initial_train_data = get_train_data(iso_start_date, iso_end_date, cityfrom, cityto)
-    print(initial_train_data)
     return jsonify(initial_train_data)
 
 
@@ -137,7 +132,6 @@ def search():
 def event_stream(start_date, end_date, cityfrom, cityto):
     total_days = (end_date - start_date).days+1
     min_prices_cal = {}
-
     current_date = start_date
 
     while current_date <= end_date:
@@ -154,7 +148,6 @@ def event_stream(start_date, end_date, cityfrom, cityto):
 
         yield f"data: {json.dumps(progress_data)}\n\n"
 
-    print(progress_data)
     save_tickets_to_db(min_prices_cal, cityfrom, cityto)
 
 
@@ -279,6 +272,35 @@ def save_tickets_to_db(min_prices_cal, departure_station_id, arrival_station_id)
     connection.close()
 
 
-
 if __name__ == '__main__':
     app.run(port=5070)
+
+
+def job():
+    current_date = datetime.now()
+    future_date = current_date + timedelta(days=10)
+    min_prices_cal = {}
+    cityfrom = 2000000
+    cityto = 2000174
+    while current_date <= future_date:
+        current_date_str = current_date.strftime("%Y-%m-%dT00:00:00")
+        data = rzdfind(current_date_str, cityfrom, cityto)
+        min_prices_cal.update(getprice(data, current_date_str))
+        save_tickets_to_db(min_prices_cal, cityfrom, cityto)
+        current_date += timedelta(days=1)
+
+
+def runSheduler():
+    try:
+        scheduler = BlockingScheduler()
+        scheduler.add_job(job, 'interval', minutes=5)
+        scheduler.start()
+    except Exception as e:
+        print(f"Ошибка в выполнении DSlots.runSheduler! Попытка повторного запуска через 10 сек. Код ошибки - {e}")
+        time.sleep(10)
+        runSheduler()
+
+
+
+
+

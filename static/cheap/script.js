@@ -1,4 +1,3 @@
-
 $(document).ready(function() {
     $('.progress').hide();
     $('.resrow').hide();
@@ -31,12 +30,13 @@ $(document).ready(function() {
                 var response = JSON.parse(event.data);
                 var progress = response.progress;
                 $('#progress').width(progress + '%');
-                var data = response.data;
-                displayResults(data, selectedWagonType);
+
 
                 if (progress === 100) {
                     eventSource.close();
                     $('.progress').hide();
+                                    var data = response.data;
+                displayResults(data, selectedWagonType);
                 }
             };
         });
@@ -281,7 +281,9 @@ function displayResults(data, selectedWagonType) {
                 priceElement.textContent = '';
                 cell.removeAttribute('data-ticket-type');
             }
+
         }
+    updatePriceClasses();
     }
 }
 
@@ -293,3 +295,31 @@ function onChangeWagonType() {
 }
 
 wagonTypeSelector.addEventListener('change', onChangeWagonType);
+
+
+function updatePriceClasses() {
+  const priceElements = document.querySelectorAll('.price');
+  const prices = [];
+
+  priceElements.forEach(element => {
+    const price = parseFloat(element.textContent);
+    prices.push(price);
+  });
+
+  const minPrice = Math.min(...prices);
+  const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+
+  priceElements.forEach(element => {
+    const price = parseFloat(element.textContent);
+
+    element.classList.remove('cheapper', 'most-cheapper', 'expensive');
+
+    if (price === minPrice) {
+      element.classList.add('cheapper');
+    } else if (price < averagePrice) {
+      element.classList.add('most-cheapper');
+    } else if (price > averagePrice) {
+      element.classList.add('expensive');
+    }
+  });
+}

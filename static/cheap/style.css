@@ -48,6 +48,7 @@ a.ui-button:active,
 span.price{
     display: block;
     font-size: 0.7em;
+    font-family: 'Roboto';
 }
 
 .glass-container.dark, .glass-container .form-select {
@@ -143,3 +144,16 @@ display: inline-block;
 }
 
 
+.cheapper {
+
+  color: #198754;
+
+}
+
+.most-cheapper {
+  color: #019acc;
+}
+
+.expensive {
+  color: #e45c74;
+}
