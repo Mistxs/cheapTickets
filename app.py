@@ -62,6 +62,7 @@ def getprice(data, current_date_str):
 
 
         if not disabledpersonflag and ("price" not in min_prices[date][vagon_type] or price < min_prices[date][vagon_type]["price"]):
+            print(item)
             departure_datetime = datetime.strptime(departure, '%Y-%m-%dT%H:%M:%S')
             arrival_datetime = datetime.strptime(arrival, '%Y-%m-%dT%H:%M:%S')
             formatted_departure = departure_datetime.strftime('%d-%m-%Y %H:%M')
@@ -155,11 +156,11 @@ def event_stream(start_date, end_date, cityfrom, cityto):
 
 # Параметры подключения к базе данных MySQL
 db_params = {
-    'host': 'localhost',
-    'user': 'fanat',
-    'password': 'Ose7vgt5!',
-    'db': 'rzd',
-    'cursorclass': pymysql.cursors.DictCursor
+        'host': 'localhost',
+        'user': 'fanat',
+        'password': 'Ose7vgt5!',
+        'db': 'rzd',
+        'cursorclass': pymysql.cursors.DictCursor
 }
 
 def get_train_data(datefrom, dateto, cityfrom, cityto):
