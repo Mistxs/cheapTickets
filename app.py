@@ -157,7 +157,7 @@ def event_stream(start_date, end_date, cityfrom, cityto):
 # Параметры подключения к базе данных MySQL
 db_params = {
         'host': 'localhost',
-        'user': 'fanat',
+        'user': 'root',
         'password': 'Ose7vgt5!',
         'db': 'rzd',
         'cursorclass': pymysql.cursors.DictCursor
