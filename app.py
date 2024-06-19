@@ -157,7 +157,7 @@ def event_stream(start_date, end_date, cityfrom, cityto):
 # Параметры подключения к базе данных MySQL
 db_params = {
         'host': 'localhost',
-        'user': 'fanat',
+        'user': 'root',
         'password': 'Ose7vgt5!',
         'db': 'rzd',
         'cursorclass': pymysql.cursors.DictCursor
@@ -224,12 +224,12 @@ def save_tickets_to_db(min_prices_cal, departure_station_id, arrival_station_id)
 
     for date, ticket_data in min_prices_cal.items():
         for category, ticket_info in ticket_data.items():
-            train_number = ticket_info['train']
-            departure_date = ticket_info['departure']
-            arrival_date = ticket_info['arrival']
-            depstation = ticket_info['depstation']
-            arrstation = ticket_info['arrstation']
-            price = ticket_info['price']
+            train_number = ticket_info.get('train',"none")
+            departure_date = ticket_info.get('departure',"none")
+            arrival_date = ticket_info.get('arrival',"none")
+            depstation = ticket_info.get('depstation',"none")
+            arrstation = ticket_info.get('arrstation',"none")
+            price = ticket_info.get('price',"none")
 
             # Помечаем все билеты для данной даты и категории как неактуальные
             cursor.execute(
@@ -275,33 +275,6 @@ def save_tickets_to_db(min_prices_cal, departure_station_id, arrival_station_id)
 
 if __name__ == '__main__':
     app.run(port=5070)
-
-
-def job():
-    current_date = datetime.now()
-    future_date = current_date + timedelta(days=10)
-    min_prices_cal = {}
-    cityfrom = 2000000
-    cityto = 2000174
-    while current_date <= future_date:
-        current_date_str = current_date.strftime("%Y-%m-%dT00:00:00")
-        data = rzdfind(current_date_str, cityfrom, cityto)
-        min_prices_cal.update(getprice(data, current_date_str))
-        save_tickets_to_db(min_prices_cal, cityfrom, cityto)
-        current_date += timedelta(days=1)
-
-
-def runSheduler():
-    try:
-        scheduler = BlockingScheduler()
-        scheduler.add_job(job, 'interval', minutes=5)
-        scheduler.start()
-    except Exception as e:
-        print(f"Ошибка в выполнении DSlots.runSheduler! Попытка повторного запуска через 10 сек. Код ошибки - {e}")
-        time.sleep(10)
-        runSheduler()
-
-
 
 
 
