@@ -225,11 +225,11 @@ def save_tickets_to_db(min_prices_cal, departure_station_id, arrival_station_id)
     for date, ticket_data in min_prices_cal.items():
         for category, ticket_info in ticket_data.items():
             train_number = ticket_info.get('train',"none")
-            departure_date = ticket_info.get('departure',"none")
-            arrival_date = ticket_info.get('arrival',"none")
-            depstation = ticket_info.get('depstation',"none")
-            arrstation = ticket_info.get('arrstation',"none")
-            price = ticket_info.get('price',"none")
+            departure_date = ticket_info.get('departure',"1970-01-01")
+            arrival_date = ticket_info.get('arrival',"1970-01-01")
+            depstation = ticket_info.get('depstation',0)
+            arrstation = ticket_info.get('arrstation',0)
+            price = ticket_info.get('price',0.0)
 
             # Помечаем все билеты для данной даты и категории как неактуальные
             cursor.execute(
