@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pymysql
 import requests
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 def rzdfind(date,cityfrom, cityto):
@@ -88,6 +88,10 @@ app = Flask(__name__, static_url_path='/cheaptickets/static')
 @app.route('/')
 def index():
     return render_template('cheaptickets.html')
+
+@app.route('/cheaptickets/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
 
 @app.route('/autocomplete', methods=['GET'])
 def autocomplete():
