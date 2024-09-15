@@ -83,7 +83,7 @@ def getprice(data, current_date_str):
 
 
 
-app = Flask(__name__, static_url_path='/cheaptickets/static', static_folder='static')
+app = Flask(__name__)
 
 @app.route('/')
 def index():
