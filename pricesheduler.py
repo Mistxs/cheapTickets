@@ -128,8 +128,8 @@ def startfind(date):
 
 
 def run():
-    start_date = "2024-09-13T00:00:00"
-    end_date = "2024-09-19T00:00:00"
+    start_date = "2024-09-15T00:00:00"
+    end_date = "2024-09-17T00:00:00"
 
     # start_date = "2024-10-10T00:00:00"
     # end_date = "2024-10-15T00:00:00"
@@ -152,5 +152,6 @@ try:
     scheduler.start()
 except (KeyboardInterrupt, SystemExit):
     pass
+
 
 
