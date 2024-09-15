@@ -17,14 +17,14 @@ $(document).ready(function() {
 
     $('#oldres tbody').empty();
 
-    fetch(`/predata?start_date=${start_date}&end_date=${end_date}&city1=${city1Id}&city2=${city2Id}`)
+    fetch(`cheaptickets/predata?start_date=${start_date}&end_date=${end_date}&city1=${city1Id}&city2=${city2Id}`)
         .then(response => response.json())
         .then(initialData => {
             displayResults(initialData, selectedWagonType);
             $('.resrow').show();
             document.getElementById("calendar").scrollIntoView({ behavior: "smooth" });
 
-            var eventSource = new EventSource(`/search?start_date=${start_date}&end_date=${end_date}&city1=${city1Id}&city2=${city2Id}`, { withCredentials: true });
+            var eventSource = new EventSource(`cheaptickets/search?start_date=${start_date}&end_date=${end_date}&city1=${city1Id}&city2=${city2Id}`, { withCredentials: true });
 
             eventSource.onmessage = function(event) {
                 var response = JSON.parse(event.data);
@@ -48,7 +48,7 @@ $(document).ready(function() {
             $(".city-input").autocomplete({
                 source: function (request, response) {
                     $.ajax({
-                        url: "/autocomplete",
+                        url: "cheaptickets/autocomplete",
                         data: { search: request.term },
                         dataType: "json",
                         success: function (data) {
