@@ -38,7 +38,7 @@
     }
 
     const randomBackground = getRandomBackground();
-    optimizeBackgroundImage(`/images/background/${randomBackground}`);
+    optimizeBackgroundImage(`/cheaptickets/static/cheap/images/background/${randomBackground}`);
     document.body.classList.add("loaded");
   });
 
