@@ -5,12 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-	  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cheap/jquery-ui.css') }}">
     <script src="{{ url_for('static', filename='cheap/js/jquery-3.3.1.min.js') }}"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="{{ url_for('static', filename='cheap/jquery-ui.js') }}"></script>
 
+	<link href="{{ url_for('static', filename='cheap/bootstrap.min.css') }}" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
 
 
@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/dpicker.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/rescal.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename='cheap/style.css') }}">
+	  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/all.css')}}" crossorigin="anonymous">
 
 
     <title>CheapTicket - Поиск дешевых РЖД билетов</title>
@@ -29,24 +30,44 @@
 
 
 	</head>
-	<body>
+
+  <body>
+
 
     <header>
-        <nav class="navbar navbar-light bg-light shadow-lg glass-container">
-            <div class="container">
-                <div class="col-md-3">
-                    <a class="navbar-brand" href="#">
-                        <img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="100px" alt="Логотип">
-                    </a>
-                </div>
-                <div class="col-md-6 text-center">
-                    <h4 style="font-family: 'Lato', Arial, sans-serif;">
-                        <span style="color: #333; font-weight: bold;">Выгодные</span>
-                        <span style="color: #333;">РЖД билеты</span>
-                    </h4>
-                </div>
-            </div>
-        </nav>
+		<nav class="navbar navbar-example navbar-expand-lg navbar-light bg-light">
+                  <div class="container-fluid">
+                    <a class="navbar-brand" href="https://mistxs.ru">mistxs | projects</a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-ex-2" aria-controls="navbar-ex-2" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="navbar navbar-toggler-icon"></span>
+					</button>
+                    <div class="navbar-collapse collapse" id="navbar-ex-2" style="">
+                      <div class="navbar-nav me-auto">
+                        <a class="nav-item nav-link active" href="https://cheaptickets.mistxs.ru">cheaptickets</a>
+                        <a class="nav-item nav-link" href="https://ruello.mistxs.ru">ruello</a>
+                        <a class="nav-item nav-link" href="https://t4u.mistxs.ru">t4u</a>
+                      </div>
+
+                      <span class="navbar-text">Поиск дешевых РЖД билетов</span>
+                    </div>
+                  </div>
+                </nav>
+<!--        <nav class="navbar navbar-light bg-light shadow-lg glass-container">-->
+<!--            <div class="container">-->
+<!--                <div class="col-md-3">-->
+<!--                    <a class="navbar-brand" href="#">-->
+<!--                        <img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="100px" alt="Логотип">-->
+<!--                    </a>-->
+<!--&lt;!&ndash;					<span>by mistxs</span>&ndash;&gt;-->
+<!--                </div>-->
+<!--                <div class="col-md-6 text-center">-->
+<!--&lt;!&ndash;                    <h4 style="font-family: 'Lato', Arial, sans-serif;">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span style="color: #333; font-weight: bold;">Выгодные</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span style="color: #333;">РЖД билеты</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </h4>&ndash;&gt;-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </nav>-->
     </header>
 
     <div class="container">
@@ -109,7 +130,7 @@
 							  <div class="calendar-wrap">
 								<div class="w-100 button-wrap">
 									<div class="pre-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-left"></i></div>
-
+<div class="cal-month"></div>
 									<div class="next-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-right"></i></div>
 								</div>
 								<table id="calendar">
@@ -185,28 +206,92 @@
 							</div>
 		</div>
 
+		<div class="glass-container subscribe dark m-4 row">
+			<span class="lead"><span class="badge rounded-pill bg-danger"> скоро </span> Подписка на направление </span>
+			<p class="m-2 mt-4">Если нужен <mark>конкретный</mark> тип места на поезд (например, нижний плацкарт до 3000р)</p>
+			<p class="m-2">Сервис будет автоматически искать место на сайте РЖД, и при нахождении билета, направит соощение в telegram</p>
+		</div>
+
 
 
     </div>
 
+<footer class="footer glass-container">
+                  <div class="container-fluid d-flex flex-md-row flex-column justify-content-between align-items-md-center gap-1 container-p-x py-3">
+                    <div>
+						<img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="100px" alt="Логотип">
+						<nav class="nav nav-mastfoot justify-content-center">
+                    <a class="nav-link" href="https://github.com/Mistxs">
+	                	<i class="fab fa-github"></i>
+	                </a>
+	                <a class="nav-link" href="https://www.facebook.com/mistxs">
+	                	<i class="fab fa-facebook-f"></i>
+	                </a>
+	                <a class="nav-link" href="https://instagram.com/mistxs">
+	                	<i class="fab fa-instagram"></i>
+	                </a>
+	                <a class="nav-link" href="https://linkedin.com/aafilippov">
+	                	<i class="fab fa-linkedin"></i>
+	                </a>
+                    <a class="nav-link" href="https://t.me/mistxs">
+	                	<i class="fab fa-telegram"></i>
+	                </a>
+                    <a class="nav-link" href="http://vk.com/anatoliyfilippov">
+	                	<i class="fab fa-vk"></i>
+	                </a>
 
+	            </nav>
+                    </div>
+                    <div class="text-black-50">
+						<p class="text-black-50 mb-0">
+							Информация предоставлена исключительно в ознакомительных целях.
+						</p>
+						<p class="text-black-50 mb-0">
+							Сервис не предлагает возможности брони, оплаты, или резервирования билетов.
+						</p>
+						<p class="text-black-50 mb-0">
+							Информация о билетах, стоимости и наличии мест предоставляется с официального портала ПАО "РЖД"
+						</p>
+						<div class="divider mt-3">
+                        	<div class="divider-text">© 2024, сделано с ❤️ <a href="http://mistxs.ru" target="_blank"> mistxs </a></div>
+                     	</div>
+
+                    </div>
+                  </div>
+                </footer>
 
 
 
 <script src="{{ url_for('static', filename='cheap/js/jquery-3.3.1.min.js') }}"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="{{ url_for('static', filename='cheap/js/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='cheap/js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='cheap/jquery-ui.js') }}"></script>
 <script src="{{ url_for('static', filename='cheap/js/rome.js') }}"></script>
 <script src="{{ url_for('static', filename='cheap/js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='cheap/script.js') }}" ></script>
 
 
 	    <script>
-        const favourites = {
-            'SPB-MOS': { city1: '2004000', city1name: 'САНКТ-ПЕТЕРБУРГ', city2: '2000000', city2name: 'МОСКВА', startDate: '01-03-2024', endDate: '31-05-2024' },
-            'MOS-SPB': { city1: '2000000', city1name: 'МОСКВА', city2: '2004000', city2name: 'САНКТ-ПЕТЕРБУРГ', startDate: '01-03-2024', endDate: '31-05-2024' },
-            'MOS-SAR': { city1: '2000000', city1name: 'МОСКВА', city2: '2020000', city2name: 'САРАТОВ 1 ПАСС', startDate: '01-03-2024', endDate: '31-05-2024' }, // Здесь подставьте данные
-            'SAR-MOS': { city1: '2020000', city1name: 'САРАТОВ 1 ПАСС', city2: '2000000', city2name: 'МОСКВА', startDate: '01-03-2024', endDate: '31-05-2024' }, // Здесь подставьте данные
+			const today = new Date();
+			const dayfrom = formatDate(today);
+			let dayto = new Date(today);
+			dayto.setDate(today.getDate() + 14);
+			dayto = formatDate(dayto);
 
+			function formatDate(date) {
+				const day = String(date.getDate()).padStart(2, '0');
+				const month = String(date.getMonth() + 1).padStart(2, '0');
+				const year = date.getFullYear();
+				return `${day}-${month}-${year}`;
+			}
+
+
+
+        const favourites = {
+            'SPB-MOS': { "city1": '2004000', "city1name": 'САНКТ-ПЕТЕРБУРГ', "city2": '2000000', "city2name": 'МОСКВА', "startDate": dayfrom, "endDate": dayto },
+            'MOS-SPB': { "city1": '2000000', "city1name": 'МОСКВА', "city2": '2004000', "city2name": 'САНКТ-ПЕТЕРБУРГ', "startDate": dayfrom, "endDate": dayto },
+            'MOS-SAR': { "city1": '2000000', "city1name": 'МОСКВА', "city2": '2020000', "city2name": 'САРАТОВ 1 ПАСС', "startDate": dayfrom, "endDate": dayto },
+            'SAR-MOS': { "city1": '2020000', "city1name": 'САРАТОВ 1 ПАСС', "city2": '2000000', "city2name": 'МОСКВА', "startDate": dayfrom, "endDate": dayto }
         };
 
         document.querySelectorAll('[data-favourite]').forEach(span => {
@@ -221,10 +306,17 @@
                 document.getElementById('city2-input').value = favouriteData.city2name;
                 document.getElementById('start_date').value = favouriteData.startDate;
                 document.getElementById('end_date').value = favouriteData.endDate;
+
+				rome(end_date, { initialValue: favouriteData.endDate });
+
+
             });
         });
 
     </script>
+
+	<!-- External JS -->
+	<script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.js') }}"></script>
 	</body>
 </html>
 

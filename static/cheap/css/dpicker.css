@@ -63,5 +63,14 @@ h2 {
   margin-top: 10px;
 }
 
+.button-wrap {
+    position: relative;
+    margin: 20px 0;
+    padding: initial!important;
+}
 
+.cal-month{
+    line-height: 1em;
+    font-size: 18px;
+}
 

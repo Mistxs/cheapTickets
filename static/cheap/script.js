@@ -111,11 +111,13 @@ $(document).ready(function() {
     Calendar.prototype.drawHeader = function(e, ticketInfo) {
     var headDay = document.getElementsByClassName('head-day');
     var headMonth = document.getElementsByClassName('head-month');
+    var calMonth = document.getElementsByClassName('cal-month');
     var ticketInfoBlock = document.querySelector('.ticket-info');
     var selectedCell = document.querySelector('td.selected[data-ticket-type]'); // Находим выбранную ячейку с типом билета
 
     e ? headDay[0].innerHTML = e : headDay[0].innerHTML = day;
     headMonth[0].innerHTML = monthTag[month] + " - " + year;
+    calMonth[0].innerHTML = monthTag[month] + "  " + year;
 
     if (ticketInfo) {
         var trainNumber = ticketInfo.train;

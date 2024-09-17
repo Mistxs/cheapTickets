@@ -32,8 +32,6 @@
         document.body.style.backgroundImage = `url('${imagePath}')`;
         // document.body.style.backgroundSize = `${newWidth}px ${newHeight}px`;
 
-        // Вызываем функцию для определения контрастности фона
-        getBackgroundColor(imagePath);
       };
     }
 
@@ -48,19 +46,17 @@
 $(function() {
 
   rome(start_date, {
-	  dateValidator: rome.val.beforeEq(end_date),
 	  time: false,
       weekStart: 1,
+      // inputFormat: 'YYYY-MM-DD'
       inputFormat: 'DD-MM-YYYY'
 	});
 
 	rome(end_date, {
-	  dateValidator: rome.val.afterEq(start_date),
 	  time: false,
       weekStart: 1,
+     // inputFormat: 'YYYY-MM-DD'
      inputFormat: 'DD-MM-YYYY'
 	});
-
-
 });
 
