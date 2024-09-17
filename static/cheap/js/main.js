@@ -38,7 +38,7 @@
     }
 
     const randomBackground = getRandomBackground();
-    optimizeBackgroundImage(`/static/images/background/${randomBackground}`);
+    optimizeBackgroundImage(`/images/background/${randomBackground}`);
     document.body.classList.add("loaded");
   });
 
