@@ -89,6 +89,18 @@ app = Flask(__name__, static_url_path='/cheaptickets/static')
 def index():
     return render_template('cheaptickets.html')
 
+@app.route('/proxy', methods=['POST'])
+def getRequest():
+    try:
+        response = request.json
+        date = response["date"]
+        cityfrom = response["cityfrom"]
+        cityto = response["cityto"]
+        rzdResponse = rzdfind(date,cityfrom, cityto)
+        return jsonify({"status": "success", "data": rzdResponse})
+    except Exception as e:
+        return jsonify({'status': 'error', 'text': f'{e}'})
+
 @app.route('/cheaptickets/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
@@ -119,6 +131,7 @@ def predata():
     iso_end_date = datetime.strptime(end_date, "%d-%m-%Y")
     initial_train_data = get_train_data(iso_start_date, iso_end_date, cityfrom, cityto)
     return jsonify(initial_train_data)
+
 
 
 @app.route('/search')
