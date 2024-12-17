@@ -221,6 +221,7 @@ def get_train_data(datefrom, dateto, cityfrom, cityto):
     return json_data
 
 def save_tickets_to_db(min_prices_cal, departure_station_id, arrival_station_id):
+    print("Сохраняю в БД")
     connection = pymysql.connect(**db_params)
     cursor = connection.cursor()
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
