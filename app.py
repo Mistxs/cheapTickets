@@ -97,7 +97,7 @@ def getRequest():
         cityfrom = response["cityfrom"]
         cityto = response["cityto"]
         rzdResponse = rzdfind(date,cityfrom, cityto)
-        return jsonify({"status": "success", "data": rzdResponse})
+        return jsonify(rzdResponse)
     except Exception as e:
         return jsonify({'status': 'error', 'text': f'{e}'})
 
