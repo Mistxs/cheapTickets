@@ -8,31 +8,17 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 def rzdfind(date,cityfrom, cityto):
-  url = "https://ticket.rzd.ru/apib2b/p/Railway/V1/Search/TrainPricing?service_provider=B2B_RZD"
+  url = "https://t4u.rety87nm.ru/proxy"
 
   payload = json.dumps({
-    "Origin": cityfrom,
-    "Destination": cityto,
-    "DepartureDate": date,
-    "TimeFrom": 0,
-    "TimeTo": 24,
-    "CarGrouping": "DontGroup",
-    "GetByLocalTime": True,
-    "SpecialPlacesDemand": "StandardPlacesAndForDisabledPersons"
+    "cityfrom": cityfrom,
+    "cityto": cityto,
+    "date": date
   })
   headers = {
     'sec-ch-ua': '"Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"',
     'Accept': 'application/json, text/plain, */*',
-    'Content-Type': 'application/json',
-    'sec-ch-ua-mobile': '?0',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-    'sentry-trace': 'a77deacef2644df4a2669794039f9a4e-87b5ea91c660179e-1',
-    'sec-ch-ua-platform': '"macOS"',
-    'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Dest': 'empty',
-    'host': 'ticket.rzd.ru',
-    'Cookie': 'session-cookie=177670e7b0b2a17dbd64334d6940ac72715fcb65feb24b902687c9746d324c6084e21755e85917975c092188951a8ad2'
+    'Content-Type': 'application/json'
   }
 
   response = requests.request("POST", url, headers=headers, data=payload).json()
