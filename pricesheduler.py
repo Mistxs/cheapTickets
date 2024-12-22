@@ -57,7 +57,7 @@ def parsetraindata(traindata):
             price = _['MinPrice']
             vagon_type = _['CarTypeName']
             disabledpersonflag = _["HasPlacesForDisabledPersons"]
-            if vagon_type in ["КУПЭ", "ПЛАЦ"]:
+            if vagon_type in ["КУПЭ", "ПЛАЦ", "СИД"]:
                 datas = {
                     "train": train,
                     "vagon_type": vagon_type,
@@ -87,9 +87,9 @@ def getPlaces(cityfrom, cityto, departure, train):
     return response
 
 
-cityfrom = 2064150
+cityfrom = 2004000
 cityto = 2000000
-DepartureDate = "2024-10-14T00:00:00"
+DepartureDate = "2024-12-26T00:00:00"
 
 def retprettydata(tickets):
     formatted = []
@@ -118,7 +118,8 @@ def startfind(date):
     for train in tqdm(traindata, desc="find places"):
         places = getPlaces(cityfrom, cityto, train['departure'], train['train'])
         for place in places:
-            if place['CarPlaceType'] == 'Lower' and place['CarType'] == "ReservedSeat":
+            print(place)
+            if place['MinPrice'] <= 2000 and place['CarType'] != 'Baggage':
                 goodtickets.append(train)
         train['places'] = places
     lowertickets = retprettydata(goodtickets)
@@ -128,8 +129,8 @@ def startfind(date):
 
 
 def run():
-    start_date = "2024-09-15T00:00:00"
-    end_date = "2024-09-17T00:00:00"
+    start_date = "2024-12-25T00:00:00"
+    end_date = "2024-12-30T00:00:00"
 
     # start_date = "2024-10-10T00:00:00"
     # end_date = "2024-10-15T00:00:00"
@@ -149,6 +150,7 @@ scheduler = BlockingScheduler()
 scheduler.add_job(run, 'interval', minutes=15)
 
 try:
+    run()
     scheduler.start()
 except (KeyboardInterrupt, SystemExit):
     pass

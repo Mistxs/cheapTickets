@@ -1,6 +1,7 @@
 import json
 import time
 from datetime import datetime, timedelta
+from config import db_params
 
 import pymysql
 import requests
