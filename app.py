@@ -7,6 +7,9 @@ import requests
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from cities import db_params
+
+
 def rzdfind(date,cityfrom, cityto):
   url = "https://ticket.rzd.ru/apib2b/p/Railway/V1/Search/TrainPricing?service_provider=B2B_RZD"
 
@@ -157,15 +160,6 @@ def event_stream(start_date, end_date, cityfrom, cityto):
 
 
 
-
-# Параметры подключения к базе данных MySQL
-db_params = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': 'Ose7vgt5!',
-        'db': 'rzd',
-        'cursorclass': pymysql.cursors.DictCursor
-}
 
 def get_train_data(datefrom, dateto, cityfrom, cityto):
     connection = pymysql.connect(**db_params)
