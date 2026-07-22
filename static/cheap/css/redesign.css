@@ -1464,7 +1464,13 @@ body.modal-open .modal-backdrop.show {
   -webkit-backdrop-filter: blur(14px);
   padding: 0.85rem !important;
   text-align: center;
+  /* Below sticky topbar on the search form */
   z-index: 35 !important;
+}
+
+/* Above Bootstrap modal (1050) + select menus (2300) while subscribe modal is open */
+body.modal-open .rd-container {
+  z-index: 2360 !important;
 }
 
 .rd-container table,

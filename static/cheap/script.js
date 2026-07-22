@@ -230,7 +230,9 @@ function setSubDateValue(inputId, dmyValue) {
             time: false,
             weekStart: 1,
             inputFormat: 'DD-MM-YYYY',
-            initialValue: dmyValue || undefined
+            initialValue: dmyValue || undefined,
+            // Append to body so calendar isn't clipped/stacked under the modal panel
+            appendTo: document.body
         });
     }
 }
