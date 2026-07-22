@@ -20,18 +20,20 @@
       return backgrounds[randomIndex];
     }
 
-    function optimizeBackgroundImage(imagePath, maxWidth) {
+    function optimizeBackgroundImage(imagePath) {
       const img = new Image();
       img.src = imagePath;
-
       img.onload = function() {
-        // const aspectRatio = img.width / img.height;
-        // const newWidth = Math.min(maxWidth, img.width);
-        // const newHeight = newWidth / aspectRatio;
-
-        document.body.style.backgroundImage = `url('${imagePath}')`;
-        // document.body.style.backgroundSize = `${newWidth}px ${newHeight}px`;
-
+        const atmosphere = document.querySelector(".ct-atmosphere");
+        if (atmosphere) {
+          atmosphere.style.backgroundImage =
+            "linear-gradient(165deg, rgba(11,17,23,0.82) 0%, rgba(14,20,27,0.72) 45%, rgba(14,20,27,0.88) 100%), " +
+            "url('" + imagePath + "')";
+          atmosphere.style.backgroundSize = "cover";
+          atmosphere.style.backgroundPosition = "center";
+        } else {
+          document.body.style.backgroundImage = "url('" + imagePath + "')";
+        }
       };
     }
 
