@@ -398,8 +398,8 @@ function collectSubscriptionPayload() {
         price_max: $('#sub-price-max').val(),
         date_from: dmyToIso($('#sub-date-from').val()),
         date_to: dmyToIso($('#sub-date-to').val()),
-        notify_from: ($('#sub-notify-from').val() || '08:00').slice(0, 5),
-        notify_to: ($('#sub-notify-to').val() || '23:00').slice(0, 5)
+        notify_from: normalizeNotifyHour($('#sub-notify-from').val(), '08:00'),
+        notify_to: normalizeNotifyHour($('#sub-notify-to').val(), '23:00')
     };
 }
 
