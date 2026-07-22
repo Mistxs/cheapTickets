@@ -226,21 +226,23 @@ function setSubDateValue(inputId, dmyValue) {
         if (existing) {
             existing.destroy();
         }
-        rome(el, {
+        if (typeof setupRomeRussianLocale === 'function') {
+            setupRomeRussianLocale();
+        } else if (rome.moment) {
+            rome.moment.locale('ru');
+        }
+        var opts = Object.assign({}, window.CT_ROME_OPTS || {
             time: false,
             weekStart: 1,
             inputFormat: 'DD-MM-YYYY',
-            initialValue: dmyValue || undefined,
-            appendTo: document.body,
             autoHideOnBlur: false,
             monthFormat: 'MMMM YYYY',
             weekdayFormat: 'min'
+        }, {
+            initialValue: dmyValue || undefined,
+            appendTo: document.body
         });
-        if (typeof setupRomeRussianLocale === 'function') {
-            setupRomeRussianLocale();
-        } else if (typeof rome !== 'undefined' && rome.moment) {
-            rome.moment.locale('ru');
-        }
+        rome(el, opts);
     }
 }
 
