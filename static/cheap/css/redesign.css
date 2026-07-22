@@ -445,7 +445,8 @@
 
 .ct-cal-main,
 .ct-body .calendar-wrap {
-  width: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
   min-width: 0 !important;
   position: relative;
   padding: 0.85rem 2.65rem 1rem !important;
@@ -454,6 +455,7 @@
   border-radius: 14px !important;
   color: var(--ct-text);
   overflow: hidden;
+  box-sizing: border-box !important;
 }
 
 .ct-cal-month-row {
@@ -547,6 +549,7 @@
 
 .ct-body #calendar {
   width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 4px 6px;
   background: transparent !important;
@@ -671,27 +674,155 @@
 @media (max-width: 991.98px) {
   .ct-cal-body,
   .ct-body .elegant-calencar {
-    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    gap: 0.75rem;
   }
-}
 
-@media (max-width: 575.98px) {
-  .ct-calendar {
-    padding: 0.95rem !important;
+  .ct-cal-detail,
+  .ct-body .wrap-header,
+  .ct-body .calwrapper {
+    width: 100% !important;
+    order: 2;
   }
 
   .ct-cal-main,
   .ct-body .calendar-wrap {
-    padding: 0.75rem 2.1rem 0.9rem !important;
+    order: 1;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .ct-main {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
+  .ct-calendar {
+    padding: 0.8rem !important;
+    border-radius: 14px !important;
+  }
+
+  /* XR / phones: arrows in header row, full width for day grid */
+  .ct-cal-main,
+  .ct-body .calendar-wrap {
+    display: grid !important;
+    grid-template-columns: 2.4rem minmax(0, 1fr) 2.4rem;
+    grid-template-areas:
+      "prev month next"
+      "grid grid grid";
+    align-items: center;
+    column-gap: 0.35rem;
+    row-gap: 0.45rem;
+    padding: 0.7rem !important;
+    overflow: visible;
+  }
+
+  .ct-body .ct-cal-nav,
+  .ct-body .calendar-wrap .pre-button,
+  .ct-body .calendar-wrap .next-button {
+    position: static !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 2.4rem !important;
+    height: 2.4rem !important;
+    border: 1px solid var(--ct-line) !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: rgba(154, 167, 181, 0.75) !important;
+  }
+
+  .ct-body .ct-cal-nav--prev,
+  .ct-body .calendar-wrap .pre-button {
+    grid-area: prev;
+    border-right: 1px solid var(--ct-line) !important;
+  }
+
+  .ct-body .ct-cal-nav--next,
+  .ct-body .calendar-wrap .next-button {
+    grid-area: next;
+    border-left: 1px solid var(--ct-line) !important;
+  }
+
+  .ct-cal-month-row {
+    grid-area: month;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .ct-body .cal-month {
+    font-size: 0.98rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ct-body .ct-cal-grid {
+    grid-area: grid;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .ct-body #calendar {
-    border-spacing: 2px 4px;
+    border-spacing: 1px 3px;
+    min-width: 0;
+  }
+
+  .ct-body #calendar th {
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+    padding: 0.1rem 0 0.25rem !important;
+  }
+
+  .ct-body #calendar td,
+  .ct-body tbody td {
+    padding: 0.28rem 0.1rem !important;
+    border-radius: 8px !important;
+  }
+
+  .ct-body #calendar span.day {
+    font-size: 0.78rem;
   }
 
   .ct-body span.price,
   .ct-body #calendar span.price {
-    font-size: 0.82rem !important;
+    font-size: 0.68rem !important;
+    margin-top: 0.15rem;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .ct-body .head-day {
+    font-size: 1.8rem;
+  }
+
+  .ct-cal-detail,
+  .ct-body .wrap-header,
+  .ct-body .calwrapper {
+    padding: 0.85rem !important;
+  }
+
+  .ct-body .ticket-info .value {
+    font-size: 0.88rem;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 430px) {
+  .ct-body span.price,
+  .ct-body #calendar span.price {
+    font-size: 0.62rem !important;
+  }
+
+  .ct-body #calendar span.day {
+    font-size: 0.72rem;
   }
 }
 
