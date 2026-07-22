@@ -138,6 +138,37 @@ function normalizeNotifyHour(value, fallback) {
     return pad2(hour) + ':00';
 }
 
+function formatNotifyWindowLabel(fromVal, toVal) {
+    var from = normalizeNotifyHour(fromVal, '08:00');
+    var to = normalizeNotifyHour(toVal, '23:00');
+    if (from === to) {
+        return 'круглосуточно';
+    }
+    if (from < to) {
+        return from + '–' + to + ' МСК';
+    }
+    return from + ' → ночь → ' + to + ' МСК';
+}
+
+function updateNotifyHint() {
+    var $hint = $('#sub-notify-hint');
+    if (!$hint.length) return;
+    var from = normalizeNotifyHour($('#sub-notify-from').val(), '08:00');
+    var to = normalizeNotifyHour($('#sub-notify-to').val(), '23:00');
+    if (from === to) {
+        $hint.text('Одинаковое время = круглосуточно: поиск каждые 20 минут весь день (МСК).');
+        return;
+    }
+    if (from < to) {
+        $hint.text('Поиск и уведомления с ' + from + ' до ' + to + ' (МСК). Вне этого окна проверки пропускаются.');
+        return;
+    }
+    $hint.text(
+        'Через полночь: активно с ' + from + ' до 23:59 и с 00:00 до ' + to +
+        ' (МСК). Днём с ' + to + ' до ' + from + ' проверки не идут.'
+    );
+}
+
 function setSelectValue($el, value) {
     $el.val(value);
     refreshSelectMenu($el);
@@ -289,6 +320,7 @@ function resetSubscriptionForm() {
     $('#sub-price-max').val(3000);
     setSelectValue($('#sub-notify-from'), '08:00');
     setSelectValue($('#sub-notify-to'), '23:00');
+    updateNotifyHint();
 
     var dateFrom = $('#start_date').val() || dmyTodayPlus(1);
     var dateTo = $('#end_date').val() || dmyTodayPlus(14);
@@ -313,6 +345,7 @@ function fillSubscriptionForm(sub) {
     setSubDateValue('sub-date-to', isoToDmy(sub.date_to));
     setSelectValue($('#sub-notify-from'), normalizeNotifyHour(sub.notify_from, '08:00'));
     setSelectValue($('#sub-notify-to'), normalizeNotifyHour(sub.notify_to, '23:00'));
+    updateNotifyHint();
     $('#sub-tg-id').val(normalizeTgNick(sub.tg_id));
     $('#saveSubscriptionBtn').text('Сохранить').show();
     $('#sub-form-tab').tab('show');
@@ -346,8 +379,7 @@ function renderSubscriptions(list) {
                 ' · ' + Math.round(sub.price_min) + '–' + Math.round(sub.price_max) + ' ₽</div>' +
               '<div class="subscription-item__meta">' + isoToDmy(sub.date_from) + ' — ' + isoToDmy(sub.date_to) + '</div>' +
               '<div class="subscription-item__meta">оповещения ' +
-                (sub.notify_from || '08:00').slice(0, 5) + '–' + (sub.notify_to || '23:00').slice(0, 5) +
-                ' МСК</div>' +
+                formatNotifyWindowLabel(sub.notify_from, sub.notify_to) + '</div>' +
               '<div class="subscription-item__actions">' +
                 '<button type="button" class="btn btn-sm btn-primary edit-sub" data-id="' + sub.id + '">Редактировать</button>' +
                 '<button type="button" class="btn btn-sm btn-outline-danger delete-sub" data-id="' + sub.id + '">Удалить</button>' +
