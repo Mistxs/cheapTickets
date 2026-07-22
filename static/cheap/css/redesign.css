@@ -1150,6 +1150,13 @@
   margin-top: 0.35rem;
 }
 
+#subscribeModal .ct-modal__hint {
+  margin: 0.15rem 0 0.85rem;
+  color: var(--ct-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 #subscribeModal .text-danger {
   color: var(--ct-bad) !important;
 }

@@ -4,7 +4,7 @@ import html
 import json
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 import pymysql
 import requests
@@ -31,6 +31,41 @@ def as_date(value):
     if hasattr(value, 'year') and hasattr(value, 'month') and hasattr(value, 'day') and not isinstance(value, str):
         return value
     return datetime.strptime(str(value), "%Y-%m-%d").date()
+
+
+def as_time(value, fallback=time(8, 0)):
+    if value is None:
+        return fallback
+    if isinstance(value, timedelta):
+        total = int(value.total_seconds()) % (24 * 3600)
+        hours, rem = divmod(total, 3600)
+        minutes = rem // 60
+        return time(hours, minutes)
+    if isinstance(value, time):
+        return value.replace(second=0, microsecond=0)
+    if isinstance(value, datetime):
+        return value.time().replace(second=0, microsecond=0)
+    text = str(value).strip()
+    for fmt in ("%H:%M:%S", "%H:%M"):
+        try:
+            return datetime.strptime(text, fmt).time()
+        except ValueError:
+            continue
+    return fallback
+
+
+def in_notify_window(sub, now=None):
+    """True if current local time is inside subscription notify_from..notify_to."""
+    now = now or datetime.now()
+    current = now.time().replace(second=0, microsecond=0)
+    start = as_time(sub.get("notify_from"), time(8, 0))
+    end = as_time(sub.get("notify_to"), time(23, 0))
+    if start == end:
+        return True
+    if start < end:
+        return start <= current <= end
+    # Overnight window, e.g. 22:00–06:00
+    return current >= start or current <= end
 
 
 def train_on_day(date, cityfrom, cityto):
@@ -241,7 +276,8 @@ def load_active_subscriptions():
                 """
                 SELECT id, tg_id, dep_station, arr_station, dep_name, arr_name,
                        car_type, place_type, price_min, price_max,
-                       date_from, date_to, last_notify_signature
+                       date_from, date_to, notify_from, notify_to,
+                       last_notify_signature
                 FROM subscriptions
                 WHERE active = 1
                 """
@@ -338,19 +374,27 @@ def run():
         print("no active subscriptions")
         return
 
-    today = datetime.now().date()
+    now = datetime.now()
+    today = now.date()
     current = []
     expired = 0
+    outside_hours = 0
     for sub in subs:
+        if not in_notify_window(sub, now):
+            outside_hours += 1
+            continue
         window = subscription_date_window(sub, today)
         if window is None:
             expired += 1
             continue
         current.append((sub, window))
 
-    print(f"active: {len(subs)}, current: {len(current)}, expired: {expired}")
+    print(
+        f"active: {len(subs)}, current: {len(current)}, "
+        f"outside hours: {outside_hours}, expired: {expired}"
+    )
     if not current:
-        print("all active subscriptions are in the past — skip RZD")
+        print("nothing to check right now — skip RZD")
         return
 
     by_direction = defaultdict(list)

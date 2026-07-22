@@ -269,6 +269,8 @@ function resetSubscriptionForm() {
     syncPlaceTypeForCarType();
     $('#sub-price-min').val(0);
     $('#sub-price-max').val(3000);
+    $('#sub-notify-from').val('08:00');
+    $('#sub-notify-to').val('23:00');
 
     var dateFrom = $('#start_date').val() || dmyTodayPlus(1);
     var dateTo = $('#end_date').val() || dmyTodayPlus(14);
@@ -291,6 +293,8 @@ function fillSubscriptionForm(sub) {
     $('#sub-price-max').val(sub.price_max);
     setSubDateValue('sub-date-from', isoToDmy(sub.date_from));
     setSubDateValue('sub-date-to', isoToDmy(sub.date_to));
+    $('#sub-notify-from').val((sub.notify_from || '08:00').slice(0, 5));
+    $('#sub-notify-to').val((sub.notify_to || '23:00').slice(0, 5));
     $('#sub-tg-id').val(normalizeTgNick(sub.tg_id));
     $('#saveSubscriptionBtn').text('Сохранить').show();
     $('#sub-form-tab').tab('show');
@@ -323,6 +327,9 @@ function renderSubscriptions(list) {
               '<div class="subscription-item__meta">' + carTypeLabel(sub.car_type) + ' · ' + placeTypeLabel(sub.place_type) +
                 ' · ' + Math.round(sub.price_min) + '–' + Math.round(sub.price_max) + ' ₽</div>' +
               '<div class="subscription-item__meta">' + isoToDmy(sub.date_from) + ' — ' + isoToDmy(sub.date_to) + '</div>' +
+              '<div class="subscription-item__meta">оповещения ' +
+                (sub.notify_from || '08:00').slice(0, 5) + '–' + (sub.notify_to || '23:00').slice(0, 5) +
+                ' МСК</div>' +
               '<div class="subscription-item__actions">' +
                 '<button type="button" class="btn btn-sm btn-primary edit-sub" data-id="' + sub.id + '">Редактировать</button>' +
                 '<button type="button" class="btn btn-sm btn-outline-danger delete-sub" data-id="' + sub.id + '">Удалить</button>' +
@@ -372,7 +379,9 @@ function collectSubscriptionPayload() {
         price_min: $('#sub-price-min').val(),
         price_max: $('#sub-price-max').val(),
         date_from: dmyToIso($('#sub-date-from').val()),
-        date_to: dmyToIso($('#sub-date-to').val())
+        date_to: dmyToIso($('#sub-date-to').val()),
+        notify_from: ($('#sub-notify-from').val() || '08:00').slice(0, 5),
+        notify_to: ($('#sub-notify-to').val() || '23:00').slice(0, 5)
     };
 }
 

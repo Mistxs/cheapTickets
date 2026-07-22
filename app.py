@@ -8,6 +8,10 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 from cities import db_params
 
 
+DEFAULT_NOTIFY_FROM = "08:00"
+DEFAULT_NOTIFY_TO = "23:00"
+
+
 def ensure_subscriptions_table():
     connection = pymysql.connect(**db_params)
     try:
@@ -27,6 +31,8 @@ def ensure_subscriptions_table():
                     price_max FLOAT NOT NULL,
                     date_from DATE NOT NULL,
                     date_to DATE NOT NULL,
+                    notify_from TIME NOT NULL DEFAULT '08:00:00',
+                    notify_to TIME NOT NULL DEFAULT '23:00:00',
                     active TINYINT NOT NULL DEFAULT 1,
                     last_notify_signature VARCHAR(64) DEFAULT NULL,
                     last_notified_at DATETIME DEFAULT NULL,
@@ -37,6 +43,24 @@ def ensure_subscriptions_table():
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+            for column, definition in (
+                ("notify_from", "TIME NOT NULL DEFAULT '08:00:00'"),
+                ("notify_to", "TIME NOT NULL DEFAULT '23:00:00'"),
+            ):
+                cursor.execute(
+                    """
+                    SELECT COUNT(*) AS c
+                    FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'subscriptions'
+                      AND COLUMN_NAME = %s
+                    """,
+                    (column,),
+                )
+                if cursor.fetchone()["c"] == 0:
+                    cursor.execute(
+                        f"ALTER TABLE subscriptions ADD COLUMN {column} {definition}"
+                    )
         connection.commit()
     finally:
         connection.close()
@@ -65,13 +89,42 @@ def parse_iso_date(value):
     raise ValueError(f"invalid date: {value}")
 
 
+def parse_hhmm(value):
+    value = str(value).strip()
+    for fmt in ("%H:%M", "%H:%M:%S"):
+        try:
+            return datetime.strptime(value, fmt).time()
+        except ValueError:
+            continue
+    raise ValueError(f"invalid time: {value}")
+
+
+def serialize_hhmm(value, fallback="08:00"):
+    if value is None:
+        return fallback
+    if isinstance(value, timedelta):
+        total = int(value.total_seconds()) % (24 * 3600)
+        hours, rem = divmod(total, 3600)
+        minutes = rem // 60
+        return f"{hours:02d}:{minutes:02d}"
+    if hasattr(value, "hour") and hasattr(value, "minute"):
+        return f"{value.hour:02d}:{value.minute:02d}"
+    text = str(value).strip()
+    if len(text) >= 5 and text[2] == ":":
+        return text[:5]
+    return fallback
+
+
 def subscription_payload_from_request(data, partial=False):
     """Собирает и валидирует поля подписки из JSON."""
     errors = []
     result = {}
 
-    def need(key, transform=None):
+    def need(key, transform=None, default=None):
         if key not in data or data[key] in (None, ""):
+            if default is not None and not partial:
+                result[key] = default if transform is None else transform(default)
+                return
             if not partial:
                 errors.append(f"missing:{key}")
             return
@@ -95,6 +148,8 @@ def subscription_payload_from_request(data, partial=False):
     need("price_max", lambda v: float(v))
     need("date_from", parse_iso_date)
     need("date_to", parse_iso_date)
+    need("notify_from", parse_hhmm, DEFAULT_NOTIFY_FROM)
+    need("notify_to", parse_hhmm, DEFAULT_NOTIFY_TO)
 
     if "car_type" in result and result["car_type"] not in ALLOWED_CAR_TYPES:
         errors.append("invalid:car_type")
@@ -387,6 +442,8 @@ def serialize_subscription(row):
         "price_max": row["price_max"],
         "date_from": row["date_from"].strftime("%Y-%m-%d") if row["date_from"] else None,
         "date_to": row["date_to"].strftime("%Y-%m-%d") if row["date_to"] else None,
+        "notify_from": serialize_hhmm(row.get("notify_from"), DEFAULT_NOTIFY_FROM),
+        "notify_to": serialize_hhmm(row.get("notify_to"), DEFAULT_NOTIFY_TO),
         "active": bool(row["active"]),
         "created_at": row["created_at"].strftime("%Y-%m-%d %H:%M") if row.get("created_at") else None,
         "updated_at": row["updated_at"].strftime("%Y-%m-%d %H:%M") if row.get("updated_at") else None,
@@ -431,8 +488,9 @@ def create_subscription():
                 """
                 INSERT INTO subscriptions (
                     tg_id, dep_station, arr_station, dep_name, arr_name,
-                    car_type, place_type, price_min, price_max, date_from, date_to, active
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
+                    car_type, place_type, price_min, price_max, date_from, date_to,
+                    notify_from, notify_to, active
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
                 """,
                 (
                     payload["tg_id"],
@@ -446,6 +504,8 @@ def create_subscription():
                     payload["price_max"],
                     payload["date_from"],
                     payload["date_to"],
+                    payload["notify_from"],
+                    payload["notify_to"],
                 ),
             )
             new_id = cursor.lastrowid
@@ -494,6 +554,8 @@ def update_subscription(sub_id):
                     price_max = %s,
                     date_from = %s,
                     date_to = %s,
+                    notify_from = %s,
+                    notify_to = %s,
                     last_notify_signature = NULL
                 WHERE id = %s AND tg_id = %s
                 """,
@@ -508,6 +570,8 @@ def update_subscription(sub_id):
                     payload["price_max"],
                     payload["date_from"],
                     payload["date_to"],
+                    payload["notify_from"],
+                    payload["notify_to"],
                     sub_id,
                     tg_id,
                 ),
