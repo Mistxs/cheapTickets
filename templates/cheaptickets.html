@@ -207,14 +207,129 @@
 		</div>
 
 		<div class="glass-container subscribe dark m-4 row">
-			<span class="lead"><span class="badge rounded-pill bg-danger"> скоро </span> Подписка на направление </span>
-			<p class="m-2 mt-4">Если нужен <mark>конкретный</mark> тип места на поезд (например, нижний плацкарт до 3000р)</p>
-			<p class="m-2">Сервис будет автоматически искать место на сайте РЖД, и при нахождении билета, направит соощение в telegram</p>
+			<span class="lead">Подписка на направление</span>
+			<p class="m-2 mt-4">Если нужен <mark>конкретный</mark> тип места на поезд (например, нижний плацкарт до 3000₽)</p>
+			<p class="m-2">Сервис будет автоматически искать место на сайте РЖД и при нахождении отправит сообщение в Telegram</p>
+			<p class="m-2"><small>Сначала напишите <code>/start</code> боту <a href="https://t.me/rzd_finder_bot" target="_blank" rel="noopener">@rzd_finder_bot</a>, затем укажите свой ник в Telegram</small></p>
+			<div class="m-2">
+				<button type="button" class="btn btn-primary me-2" id="openSubscribeModal">Оформить подписку</button>
+				<button type="button" class="btn btn-outline-light" id="openMySubscriptions">Текущие подписки</button>
+			</div>
 		</div>
 
 
 
     </div>
+
+	<div class="modal fade" id="subscribeModal" tabindex="-1" role="dialog" aria-labelledby="subscribeModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+	    <div class="modal-content glass-container subscribe-modal">
+	      <div class="subscribe-panel">
+	      <div class="modal-top">
+	        <div class="modal-header">
+	          <h5 class="modal-title lead mb-0" id="subscribeModalLabel">Подписка на билеты</h5>
+	          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	            <span aria-hidden="true">&times;</span>
+	          </button>
+	        </div>
+	        <ul class="nav nav-tabs subscribe-tabs" id="subscribeTabs" role="tablist">
+	          <li class="nav-item">
+	            <a class="nav-link active" id="sub-form-tab" data-toggle="tab" href="#sub-form-pane" role="tab">Новая / редактирование</a>
+	          </li>
+	          <li class="nav-item">
+	            <a class="nav-link" id="sub-list-tab" data-toggle="tab" href="#sub-list-pane" role="tab">Текущие подписки</a>
+	          </li>
+	        </ul>
+	      </div>
+	      <div class="modal-body">
+	        <div class="tab-content">
+	          <div class="tab-pane fade show active" id="sub-form-pane" role="tabpanel">
+	            <input type="hidden" id="sub-id" value="">
+	            <div class="form-row">
+	              <div class="form-group col-md-6">
+	                <label for="sub-city1">Станция отправления</label>
+	                <input type="text" class="form-control city-input sub-city-input" id="sub-city1" placeholder="Станция отправления" data-city-id="" autocomplete="off">
+	              </div>
+	              <div class="form-group col-md-6">
+	                <label for="sub-city2">Станция назначения</label>
+	                <input type="text" class="form-control city-input sub-city-input" id="sub-city2" placeholder="Станция назначения" data-city-id="" autocomplete="off">
+	              </div>
+	            </div>
+	            <div class="form-row">
+	              <div class="form-group col-md-3">
+	                <label for="sub-date-from">Даты с</label>
+	                <input type="text" class="form-control" id="sub-date-from" placeholder="Поиск с" autocomplete="off">
+	              </div>
+	              <div class="form-group col-md-3">
+	                <label for="sub-date-to">Даты по</label>
+	                <input type="text" class="form-control" id="sub-date-to" placeholder="Поиск до" autocomplete="off">
+	              </div>
+	              <div class="form-group col-md-3">
+	                <label for="sub-price-min">Цена от</label>
+	                <input type="number" class="form-control" id="sub-price-min" value="0" min="0">
+	              </div>
+	              <div class="form-group col-md-3">
+	                <label for="sub-price-max">Цена до</label>
+	                <input type="number" class="form-control" id="sub-price-max" value="3000" min="0">
+	              </div>
+	            </div>
+	            <div class="form-row">
+	              <div class="form-group col-md-4">
+	                <label for="sub-car-type">Тип вагона</label>
+	                <select id="sub-car-type" class="form-control form-select">
+	                  <option value="ПЛАЦ">Плацкарт</option>
+	                  <option value="КУПЕ">Купе</option>
+	                  <option value="СИД">Сидячее</option>
+	                  <option value="ANY">Не имеет значения</option>
+	                </select>
+	              </div>
+	              <div class="form-group col-md-4">
+	                <label for="sub-place-type">Тип места</label>
+	                <select id="sub-place-type" class="form-control form-select">
+	                  <option value="lower">Нижнее</option>
+	                  <option value="upper">Верхнее</option>
+	                  <option value="any">Любое</option>
+	                </select>
+	              </div>
+	              <div class="form-group col-md-4">
+	                <label for="sub-tg-id">Telegram ник</label>
+	                <input type="text" class="form-control" id="sub-tg-id" placeholder="@nick" autocomplete="off">
+	              </div>
+	            </div>
+	            <div id="sub-form-status" class="small text-muted"></div>
+	          </div>
+	          <div class="tab-pane fade" id="sub-list-pane" role="tabpanel">
+	            <div class="form-group">
+	              <label for="sub-list-tg-id">Telegram ник</label>
+	              <div class="input-group">
+	                <input type="text" class="form-control" id="sub-list-tg-id" placeholder="@nick">
+	                <div class="input-group-append">
+	                  <button class="btn btn-primary" type="button" id="loadSubscriptionsBtn">Показать</button>
+	                </div>
+	              </div>
+	            </div>
+	            <div id="subscriptionsList"></div>
+	          </div>
+	        </div>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-outline-light" data-dismiss="modal">Закрыть</button>
+	        <button type="button" class="btn btn-primary" id="saveSubscriptionBtn">Отправить</button>
+	      </div>
+	      <div class="sub-confirm" id="subDeleteConfirm" hidden>
+	        <div class="sub-confirm-card">
+	          <p class="sub-confirm-text mb-3" id="subDeleteConfirmText">Удалить подписку?</p>
+	          <div class="d-flex justify-content-end">
+	            <button type="button" class="btn btn-outline-light btn-sm mr-2" id="subDeleteCancelBtn">Отмена</button>
+	            <button type="button" class="btn btn-primary btn-sm" id="subDeleteConfirmBtn">Удалить</button>
+	          </div>
+	        </div>
+	      </div>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
 
 <footer class="footer glass-container">
                   <div class="container-fluid d-flex flex-md-row flex-column justify-content-between align-items-md-center gap-1 container-p-x py-3">

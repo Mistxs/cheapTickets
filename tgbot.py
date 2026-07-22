@@ -1,19 +1,33 @@
+import os
+
 import requests
 
-def send_telegram_message(token, chat_id, message):
+BOT_TOKEN = '6746194766:AAFs7xjLRf_n2sWkww3VDrVVQ1F0qkRyz6E'
+# sing-box-inna на spica: mixed inbound → VLESS inna
+BOT_PROXY = os.environ.get('BOT_PROXY', 'http://127.0.0.1:10808')
+
+
+def _proxies():
+    if not BOT_PROXY:
+        return None
+    return {'http': BOT_PROXY, 'https': BOT_PROXY}
+
+
+def send_telegram_message(chat_id, message, token=None):
+    token = token or BOT_TOKEN
+    chat_id = str(chat_id).strip()
+    if chat_id and not chat_id.lstrip('-').isdigit() and not chat_id.startswith('@'):
+        chat_id = '@' + chat_id
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         'chat_id': chat_id,
-        'text': message
+        'text': message,
+        'disable_web_page_preview': True,
     }
-    response = requests.post(url, data=payload)
+    response = requests.post(url, data=payload, timeout=30, proxies=_proxies())
     return response
 
-# Ваш основной код
-def check_tickets(info):
-        token = '6746194766:AAFs7xjLRf_n2sWkww3VDrVVQ1F0qkRyz6E'
-        chat_id = '6225487468'
-        message = f"ЕСТЬ БИЛЕТЫ - {info}"
-        send_telegram_message(token, chat_id, message)
 
-
+def notify_tickets(chat_id, info):
+    message = f"ЕСТЬ БИЛЕТЫ\n{info}"
+    return send_telegram_message(chat_id, message)

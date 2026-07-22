@@ -1,157 +1,232 @@
+"""Фоновая проверка подписок: ищет билеты по условиям и шлёт уведомления в Telegram."""
+import hashlib
+import json
+import time
 from datetime import datetime, timedelta
+
+import pymysql
+import requests
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-
-import requests
-import json
-from tqdm import tqdm
-
 import tgbot
+from cities import db_params
 
-headers = {
-        'sec-ch-ua': '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
-        'sec-ch-ua-mobile': '?0',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJsdHBhVG9rZW4iOiJaS1RsVUM1RllBVWZ1NUtteVdOcHFjYkI4ZmovN29DdUUrbWc1MGdsdjVpWk4rTVVSOHIrK1NnaHQzd0o5dFZNa2xvc2ZOTW5URlZtQ1p1MURVZnR5bVU3aS9oOEp1NmhwZXV3czVEdkZoU1hNdDhtSFlVSzhyNkZwVjFoNWkvdUUxWjVWOVJ6cWMvTTVkdFFkMkowbUdRL2xKb0p3b3pTZXVFV0dMTzhVUTNmcjRucVVZWnE0Rm5tUnpJTmpUM0pRaE5kaUpyRVhLRWVRTWtFbjIwR2lqSEk0VHZwViswYWdFbzB1RVRDTER3RHZwb0xJMWhaMjdYMElycVFhaSs4Y2JaaFYyWFlTNWFCeUprT3UzZWtmWis5U1ZYbHJqVDlzWWFLdkJ6d0prRjBvZkU1UjJzYVhLc2U3aGdIemUrNkF4elFvU1ZIOEg1MU1oSTdDL1Z1bklxVExHV2pjcXRyVnpKYTc0ait5YXdCNGNzYldTUXpNOWhaaXFtY0hma1VyWVFlQ25YakgzelZRSUo2Z1R2cXo4Zng1dmpEQ0psZWFOYmdzNWxFMUlDcHFDQkpyWFU3bWp1VDlWa1hxT0FnWjRiSTBja2UvU2JKRkdYcjdHbDFmM2l1VEhZcWJjYmNMbUdoNjU2V29Dc05ONDRGc045U3ErdmQrdWQ1VFJja0pwK2pUMnBZOElkcVBBUUdERnFiTWloT2E4cktYOGNiYlhWM2R3Q0FmWDZPek1DUDV5cWtURmhWZGI0ZkdyUktRcXVCUWwrNExyTTJNcGdhV3MxcXBvSEwxcWFCMWpFSFNVYUphUFVpWnVjUFBpUW9UOTNHMDYzQkoxVTQwZzJXIiwibG9naW4iOiJmaWxpcHBvdmFuYXRvbGl5IiwiZW1haWwiOiJmaWxpcHBvdmFuYXRvbGl5QHlhLnJ1IiwidXNlcl9pZCI6MTEyMTg0MiwiYWN0aXZlIjp0cnVlLCJzZXNzaW9uS2V5IjoiQXV0aF9zdmMtZTA1NzJhMTQ0NWFlZGRlZDU4ZGVkYjU4ZGU3ZDRhZGU2NjMzY2M0NTQ1YzVhYTgyYTc2YjBmYTYwMWIyNThhNSIsImNvcnBvcmF0ZSI6ZmFsc2UsImZpbHRlcl9jYXJyaWVycyI6W10sImtzaWQiOiI4ZjJlMmNiNi0wZTYyLTRmYzYtOTk0Yi1jMTVhY2U1MjI1OTNfMSIsImlzcyI6InRpY2tldC5yemQucnUiLCJleHAiOjE3MjMwMzUxNjl9.Qr2yy-1vRq4Y9zYJPf3lh5lWpMgMBb6U4ULGXJGBxfc',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json, text/plain, */*',
-        'sentry-trace': '44ea49ae99184bb4b4492ba72bee2a44-aa32efb8bdcbf4df-1',
-        'sec-ch-ua-platform': '"macOS"',
-        'Sec-Fetch-Site': 'same-origin',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Dest': 'empty',
-        'host': 'ticket.rzd.ru',
-        'Cookie': 'JSESSIONID=7BDA5CD4DEACF997AAD767BB1A0CC08F; session-cookie=17e922ccc3b22d908c49fa3318991a24ca71a347ac0def63c87a6c8ea923da3d20590687d1590afe265285f320c9f32d'
-    }
+RZD_HEADERS = {
+    'Accept': 'application/json, text/plain, */*',
+    'Content-Type': 'application/json',
+    'User-Agent': (
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
+    ),
+    'host': 'ticket.rzd.ru',
+}
 
-traindata = []
 
-def trainOnDay(date, cityfrom, cityto):
+def train_on_day(date, cityfrom, cityto):
     url = "https://ticket.rzd.ru/apib2b/p/Railway/V1/Search/TrainPricing?service_provider=B2B_RZD"
-
     payload = json.dumps({
-        "Origin": cityfrom,
-        "Destination": cityto,
+        "Origin": str(cityfrom),
+        "Destination": str(cityto),
         "DepartureDate": date,
         "TimeFrom": 0,
         "TimeTo": 24,
         "CarGrouping": "DontGroup",
         "GetByLocalTime": True,
-        "SpecialPlacesDemand": "StandardPlacesAndForDisabledPersons"
-    })
-
-
-    response = requests.request("POST", url, headers=headers, data=payload).json()
-
-    return response
-def parsetraindata(traindata):
-    reformattraindata = []
-    for item in tqdm(traindata["Trains"], desc="Parsing"):
-        vagon = item["CarGroups"]
-        for _ in vagon:
-            train = item["DisplayTrainNumber"]
-            depstation = item["OriginName"]
-            arrstation = item["DestinationName"]
-            arrival = item["ArrivalDateTime"]
-            departure = item["DepartureDateTime"]
-            price = _['MinPrice']
-            vagon_type = _['CarTypeName']
-            disabledpersonflag = _["HasPlacesForDisabledPersons"]
-            if vagon_type in ["КУПЭ", "ПЛАЦ"]:
-                datas = {
-                    "train": train,
-                    "vagon_type": vagon_type,
-                    "departure": departure,
-                    "arrival": arrival,
-                    "depstation": depstation,
-                    "arrstation": arrstation,
-                    "price": price
-                }
-                reformattraindata.append(datas)
-    return reformattraindata
-def getPlaces(cityfrom, cityto, departure, train):
-    url = "https://ticket.rzd.ru/api/v1/railway/carpricing/lite"
-
-    payload = json.dumps({
-        "OriginCode": cityfrom,
-        "DestinationCode": cityto,
-        "Provider": "P1",
-        "DepartureDate": departure,
-        "TrainNumber": train,
         "SpecialPlacesDemand": "StandardPlacesAndForDisabledPersons",
-        "OnlyFpkBranded": False
     })
+    response = requests.post(url, headers=RZD_HEADERS, data=payload, timeout=45)
+    response.raise_for_status()
+    return response.json()
 
-    response = requests.request("POST", url, headers=headers, data=payload).json()
 
-    return response
+def match_cars(trains_payload, car_type, place_type, price_min, price_max):
+    """Фильтрует CarGroups по типу вагона, месту и цене."""
+    if car_type == "СИД":
+        place_type = "any"
+    matches = []
+    for item in trains_payload.get("Trains", []):
+        for car in item.get("CarGroups", []):
+            if car.get("HasPlacesForDisabledPersons"):
+                continue
+            if car_type not in ("ANY", "ЛЮБОЙ") and car.get("CarTypeName") != car_type:
+                continue
+
+            price = float(car.get("MinPrice") or 0)
+            if price < float(price_min) or price > float(price_max):
+                continue
+
+            lower_qty = int(car.get("LowerPlaceQuantity") or 0)
+            upper_qty = int(car.get("UpperPlaceQuantity") or 0)
+            place_qty = int(car.get("PlaceQuantity") or 0)
+
+            if place_type == "lower" and lower_qty <= 0:
+                continue
+            if place_type == "upper" and upper_qty <= 0:
+                continue
+            if place_type == "any" and (lower_qty + upper_qty + place_qty) <= 0:
+                continue
+
+            matches.append({
+                "train": item.get("DisplayTrainNumber"),
+                "departure": item.get("DepartureDateTime"),
+                "arrival": item.get("ArrivalDateTime"),
+                "depstation": item.get("OriginName"),
+                "arrstation": item.get("DestinationName"),
+                "car_type": car.get("CarTypeName"),
+                "place_type": place_type,
+                "price": price,
+                "lower": lower_qty,
+                "upper": upper_qty,
+            })
+    return matches
 
 
-cityfrom = 2064150
-cityto = 2000000
-DepartureDate = "2024-10-14T00:00:00"
+def find_matches_for_subscription(sub):
+    date_from = sub["date_from"]
+    date_to = sub["date_to"]
+    if isinstance(date_from, str):
+        date_from = datetime.strptime(date_from, "%Y-%m-%d").date()
+    if isinstance(date_to, str):
+        date_to = datetime.strptime(date_to, "%Y-%m-%d").date()
 
-def retprettydata(tickets):
-    formatted = []
-    for ticket in tqdm(tickets,desc="prettied data"):
-        for place in ticket["places"]:
-            if place["CarPlaceType"] == "Lower" and place['CarType'] == "ReservedSeat":
-                quantity = place["PlaceQuantity"]
-                price = place["MinPrice"]
-                formatted.append({
-                    'train': ticket['train'],
-                    'type': ticket['vagon_type'],
-                    'departure': ticket['departure'],
-                    'prices': {
-                        'lower': {
-                            'Quantity': quantity,
-                            'Price': price
-                        }
-                    }
-                })
-    return formatted
+    today = datetime.now().date()
+    if date_to < today:
+        return []
+    if date_from < today:
+        date_from = today
 
-def startfind(date):
-    trains = trainOnDay(date, cityfrom, cityto)
-    traindata = parsetraindata(trains)
-    goodtickets = []
-    for train in tqdm(traindata, desc="find places"):
-        places = getPlaces(cityfrom, cityto, train['departure'], train['train'])
-        for place in places:
-            if place['CarPlaceType'] == 'Lower' and place['CarType'] == "ReservedSeat":
-                goodtickets.append(train)
-        train['places'] = places
-    lowertickets = retprettydata(goodtickets)
-    if lowertickets:
-        print("ЕСТЬ БИЛЕТЫ")
-        tgbot.check_tickets(lowertickets)
+    all_matches = []
+    current = date_from
+    while current <= date_to:
+        date_str = current.strftime("%Y-%m-%dT00:00:00")
+        try:
+            payload = train_on_day(date_str, sub["dep_station"], sub["arr_station"])
+            day_matches = match_cars(
+                payload,
+                sub["car_type"],
+                sub["place_type"],
+                sub["price_min"],
+                sub["price_max"],
+            )
+            all_matches.extend(day_matches)
+        except Exception as exc:
+            print(f"[sub {sub['id']}] RZD error on {date_str}: {exc}")
+        time.sleep(0.4)
+        current += timedelta(days=1)
+    return all_matches
+
+
+def matches_signature(matches):
+    raw = "|".join(
+        sorted(
+            f"{m['train']}:{m['departure']}:{m['price']}:{m['lower']}:{m['upper']}"
+            for m in matches
+        )
+    )
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+
+
+def format_matches(sub, matches):
+    place_labels = {"lower": "нижнее", "upper": "верхнее", "any": "любое"}
+    car_labels = {"ANY": "любой вагон", "ПЛАЦ": "плацкарт", "КУПЕ": "купе", "СИД": "сидячее"}
+    place = place_labels.get(sub["place_type"], sub["place_type"])
+    car = car_labels.get(sub["car_type"], sub["car_type"])
+    lines = [
+        f"{sub['dep_name']} → {sub['arr_name']}",
+        f"{car}, место: {place}, до {sub['price_max']:.0f} ₽",
+        "",
+    ]
+    for m in matches[:12]:
+        dep = m["departure"].replace("T", " ")
+        lines.append(
+            f"#{m['train']} {dep} — {m['price']:.0f} ₽ "
+            f"(↓{m['lower']} ↑{m['upper']})"
+        )
+    if len(matches) > 12:
+        lines.append(f"…и ещё {len(matches) - 12}")
+    return "\n".join(lines)
+
+
+def load_active_subscriptions():
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, tg_id, dep_station, arr_station, dep_name, arr_name,
+                       car_type, place_type, price_min, price_max,
+                       date_from, date_to, last_notify_signature
+                FROM subscriptions
+                WHERE active = 1
+                """
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()
+
+
+def update_notify_signature(sub_id, signature):
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE subscriptions
+                SET last_notify_signature = %s, last_notified_at = NOW()
+                WHERE id = %s
+                """,
+                (signature, sub_id),
+            )
+        connection.commit()
+    finally:
+        connection.close()
 
 
 def run():
-    start_date = "2024-09-15T00:00:00"
-    end_date = "2024-09-17T00:00:00"
+    print(f"[{datetime.now()}] checking subscriptions…")
+    try:
+        subs = load_active_subscriptions()
+    except Exception as exc:
+        print(f"DB error: {exc}")
+        return
 
-    # start_date = "2024-10-10T00:00:00"
-    # end_date = "2024-10-15T00:00:00"
+    if not subs:
+        print("no active subscriptions")
+        return
 
-    start_date = datetime.fromisoformat(start_date)
-    end_date = datetime.fromisoformat(end_date)
+    print(f"active: {len(subs)}")
+    for sub in subs:
+        matches = find_matches_for_subscription(sub)
+        if not matches:
+            print(f"  sub#{sub['id']}: no matches")
+            continue
 
-    current_date = start_date
+        signature = matches_signature(matches)
+        if signature == (sub.get("last_notify_signature") or ""):
+            print(f"  sub#{sub['id']}: same matches, skip notify")
+            continue
 
-    while current_date <= end_date:
-        date = current_date.strftime("%Y-%m-%dT%H:%M:%S")
-        startfind(date)
-        current_date += timedelta(days=1)
+        text = format_matches(sub, matches)
+        try:
+            resp = tgbot.notify_tickets(sub["tg_id"], text)
+            print(f"  sub#{sub['id']}: notify {resp.status_code} → {sub['tg_id']}")
+            if resp.ok:
+                update_notify_signature(sub["id"], signature)
+            else:
+                print(f"  telegram error: {resp.text[:300]}")
+        except Exception as exc:
+            print(f"  notify failed: {exc}")
 
 
-scheduler = BlockingScheduler()
-scheduler.add_job(run, 'interval', minutes=15)
+if __name__ == "__main__":
+    import sys
 
-try:
-    scheduler.start()
-except (KeyboardInterrupt, SystemExit):
-    pass
-
-
-
+    if "--once" in sys.argv:
+        run()
+    else:
+        scheduler = BlockingScheduler()
+        scheduler.add_job(run, "interval", minutes=20, next_run_time=datetime.now())
+        try:
+            scheduler.start()
+        except (KeyboardInterrupt, SystemExit):
+            pass

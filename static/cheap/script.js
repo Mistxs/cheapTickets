@@ -44,30 +44,405 @@ $(document).ready(function() {
 
 
 
-    $(function () {
-            $(".city-input").autocomplete({
-                source: function (request, response) {
-                    $.ajax({
-                        url: "/autocomplete",
-                        data: { search: request.term },
-                        dataType: "json",
-                        success: function (data) {
-                            response(data);
-                        }
-                    });
-                },
-                minLength: 2,
-                select: function(event, ui) {
-                    $(this).val(ui.item.label);
-                    $(this).attr('data-city-id', ui.item.value);
-                    return false;
+    initCityAutocomplete($('.city-input'));
+    initSubscriptionsUI();
+});
+
+function initCityAutocomplete($inputs) {
+    $inputs.each(function() {
+        var $el = $(this);
+        if ($el.data('ui-autocomplete')) {
+            $el.autocomplete('destroy');
+        }
+    });
+    $inputs.autocomplete({
+        appendTo: 'body',
+        source: function (request, response) {
+            $.ajax({
+                url: '/autocomplete',
+                data: { search: request.term },
+                dataType: 'json',
+                success: function (data) {
+                    response(data);
                 }
             });
+        },
+        minLength: 2,
+        select: function(event, ui) {
+            $(this).val(ui.item.label);
+            $(this).attr('data-city-id', ui.item.value);
+            return false;
+        }
+    });
+}
 
+function pad2(n) {
+    return String(n).padStart(2, '0');
+}
 
+function formatDmy(date) {
+    return pad2(date.getDate()) + '-' + pad2(date.getMonth() + 1) + '-' + date.getFullYear();
+}
+
+function dmyTodayPlus(days) {
+    var d = new Date();
+    d.setDate(d.getDate() + days);
+    return formatDmy(d);
+}
+
+function dmyToIso(dmy) {
+    if (!dmy) return '';
+    var parts = String(dmy).trim().split('-');
+    if (parts.length !== 3) return '';
+    if (parts[0].length === 4) {
+        return parts[0] + '-' + parts[1] + '-' + parts[2];
+    }
+    return parts[2] + '-' + parts[1] + '-' + parts[0];
+}
+
+function isoToDmy(iso) {
+    if (!iso) return '';
+    var parts = String(iso).trim().split('-');
+    if (parts.length !== 3) return iso;
+    if (parts[0].length === 4) {
+        return parts[2] + '-' + parts[1] + '-' + parts[0];
+    }
+    return iso;
+}
+
+function normalizeTgNick(raw) {
+    var value = String(raw || '').trim();
+    if (!value) return '';
+    if (value.charAt(0) !== '@') {
+        value = '@' + value.replace(/^@+/, '');
+    }
+    return value;
+}
+
+function getStoredTgNick() {
+    return localStorage.getItem('tg_id') || '';
+}
+
+function storeTgNick(nick) {
+    nick = normalizeTgNick(nick);
+    if (nick) {
+        localStorage.setItem('tg_id', nick);
+    }
+    return nick;
+}
+
+function setSubDateValue(inputId, dmyValue) {
+    var el = document.getElementById(inputId);
+    if (!el) return;
+    el.value = dmyValue || '';
+    if (typeof rome !== 'undefined') {
+        var existing = rome.find(el);
+        if (existing) {
+            existing.destroy();
+        }
+        rome(el, {
+            time: false,
+            weekStart: 1,
+            inputFormat: 'DD-MM-YYYY',
+            initialValue: dmyValue || undefined
         });
+    }
+}
 
-});
+function syncPlaceTypeForCarType() {
+    var carType = $('#sub-car-type').val();
+    var $place = $('#sub-place-type');
+    if (carType === 'СИД') {
+        $place.val('any').prop('disabled', true);
+    } else {
+        $place.prop('disabled', false);
+    }
+}
+
+function resetSubscriptionForm() {
+    $('#sub-id').val('');
+    $('#sub-city1')
+        .val($('#city1-input').val() || '')
+        .attr('data-city-id', $('#city1-input').attr('data-city-id') || '');
+    $('#sub-city2')
+        .val($('#city2-input').val() || '')
+        .attr('data-city-id', $('#city2-input').attr('data-city-id') || '');
+    $('#sub-car-type').val('ПЛАЦ');
+    $('#sub-place-type').val('lower');
+    syncPlaceTypeForCarType();
+    $('#sub-price-min').val(0);
+    $('#sub-price-max').val(3000);
+
+    var dateFrom = $('#start_date').val() || dmyTodayPlus(1);
+    var dateTo = $('#end_date').val() || dmyTodayPlus(14);
+    setSubDateValue('sub-date-from', dateFrom);
+    setSubDateValue('sub-date-to', dateTo);
+
+    $('#sub-tg-id').val(normalizeTgNick(getStoredTgNick()));
+    $('#sub-form-status').text('');
+    $('#saveSubscriptionBtn').text('Отправить').show();
+}
+
+function fillSubscriptionForm(sub) {
+    $('#sub-id').val(sub.id);
+    $('#sub-city1').val(sub.dep_name || '').attr('data-city-id', sub.dep_station || '');
+    $('#sub-city2').val(sub.arr_name || '').attr('data-city-id', sub.arr_station || '');
+    $('#sub-car-type').val(sub.car_type);
+    $('#sub-place-type').val(sub.place_type);
+    syncPlaceTypeForCarType();
+    $('#sub-price-min').val(sub.price_min);
+    $('#sub-price-max').val(sub.price_max);
+    setSubDateValue('sub-date-from', isoToDmy(sub.date_from));
+    setSubDateValue('sub-date-to', isoToDmy(sub.date_to));
+    $('#sub-tg-id').val(normalizeTgNick(sub.tg_id));
+    $('#saveSubscriptionBtn').text('Сохранить').show();
+    $('#sub-form-tab').tab('show');
+}
+
+function placeTypeLabel(value) {
+    if (value === 'lower') return 'нижнее';
+    if (value === 'upper') return 'верхнее';
+    return 'любое';
+}
+
+function carTypeLabel(value) {
+    if (value === 'ANY') return 'любой вагон';
+    if (value === 'ПЛАЦ') return 'плацкарт';
+    if (value === 'КУПЕ') return 'купе';
+    if (value === 'СИД') return 'сидячее';
+    return value || '';
+}
+
+function renderSubscriptions(list) {
+    var $box = $('#subscriptionsList');
+    if (!list.length) {
+        $box.html('<p class="text-muted mb-0">Активных подписок нет</p>');
+        return;
+    }
+    var html = list.map(function(sub) {
+        return (
+            '<div class="subscription-item mb-3 p-3">' +
+              '<div><strong>' + (sub.dep_name || '') + ' → ' + (sub.arr_name || '') + '</strong></div>' +
+              '<div class="small">' + carTypeLabel(sub.car_type) + ', ' + placeTypeLabel(sub.place_type) +
+                ', ' + Math.round(sub.price_min) + '–' + Math.round(sub.price_max) + ' ₽</div>' +
+              '<div class="small">' + isoToDmy(sub.date_from) + ' … ' + isoToDmy(sub.date_to) + '</div>' +
+              '<div class="mt-2">' +
+                '<button type="button" class="btn btn-sm btn-primary mr-2 edit-sub" data-id="' + sub.id + '">Редактировать</button>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger delete-sub" data-id="' + sub.id + '">Удалить</button>' +
+              '</div>' +
+            '</div>'
+        );
+    }).join('');
+    $box.html(html);
+    $box.data('items', list);
+}
+
+function loadSubscriptions() {
+    var nick = normalizeTgNick($('#sub-list-tg-id').val());
+    if (!nick || nick === '@') {
+        $('#subscriptionsList').html('<p class="text-danger mb-0">Укажите Telegram ник</p>');
+        return;
+    }
+    storeTgNick(nick);
+    $('#sub-list-tg-id').val(nick);
+    $('#subscriptionsList').html('<p class="text-muted mb-0">Загрузка…</p>');
+    fetch('/api/subscriptions?tg_id=' + encodeURIComponent(nick))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) {
+                $('#subscriptionsList').html('<p class="text-danger mb-0">' + data.error + '</p>');
+                return;
+            }
+            renderSubscriptions(data);
+        })
+        .catch(function() {
+            $('#subscriptionsList').html('<p class="text-danger mb-0">Ошибка загрузки</p>');
+        });
+}
+
+function collectSubscriptionPayload() {
+    var nick = normalizeTgNick($('#sub-tg-id').val());
+    var carType = $('#sub-car-type').val();
+    var placeType = carType === 'СИД' ? 'any' : $('#sub-place-type').val();
+    return {
+        tg_id: nick,
+        dep_station: $('#sub-city1').attr('data-city-id'),
+        arr_station: $('#sub-city2').attr('data-city-id'),
+        dep_name: ($('#sub-city1').val() || '').trim(),
+        arr_name: ($('#sub-city2').val() || '').trim(),
+        car_type: carType,
+        place_type: placeType,
+        price_min: $('#sub-price-min').val(),
+        price_max: $('#sub-price-max').val(),
+        date_from: dmyToIso($('#sub-date-from').val()),
+        date_to: dmyToIso($('#sub-date-to').val())
+    };
+}
+
+function bindTgNickInput($input) {
+    $input.on('blur', function() {
+        var nick = normalizeTgNick($(this).val());
+        if (nick && nick !== '@') {
+            $(this).val(nick);
+        }
+    });
+    $input.on('input', function() {
+        var val = $(this).val();
+        if (val && val.charAt(0) !== '@') {
+            $(this).val('@' + val.replace(/^@+/, ''));
+        }
+    });
+}
+
+function initSubscriptionsUI() {
+    bindTgNickInput($('#sub-tg-id'));
+    bindTgNickInput($('#sub-list-tg-id'));
+    $('#sub-list-tg-id').val(normalizeTgNick(getStoredTgNick()) || '');
+    $('#sub-car-type').on('change', syncPlaceTypeForCarType);
+
+    $('#openSubscribeModal').on('click', function() {
+        resetSubscriptionForm();
+        $('#sub-form-tab').tab('show');
+        $('#subscribeModal').modal('show');
+    });
+
+    $('#openMySubscriptions').on('click', function() {
+        var nick = normalizeTgNick(getStoredTgNick());
+        $('#sub-list-tg-id').val(nick || '@');
+        $('#subscribeModal').modal('show');
+        $('#sub-list-tab').tab('show');
+        if (nick && nick !== '@') {
+            loadSubscriptions();
+        }
+    });
+
+    $('#subscribeModal').on('shown.bs.modal', function() {
+        initCityAutocomplete($('#sub-city1, #sub-city2'));
+    });
+
+    $('#sub-list-tab').on('shown.bs.tab', function() {
+        $('#sub-list-tg-id').val(normalizeTgNick($('#sub-tg-id').val() || getStoredTgNick()) || '@');
+        $('#saveSubscriptionBtn').hide();
+    });
+
+    $('#sub-form-tab').on('shown.bs.tab', function() {
+        $('#saveSubscriptionBtn').show();
+    });
+
+    $('#loadSubscriptionsBtn').on('click', loadSubscriptions);
+
+    $('#saveSubscriptionBtn').on('click', function() {
+        var payload = collectSubscriptionPayload();
+        if (!payload.tg_id || payload.tg_id === '@') {
+            $('#sub-form-status').text('Укажите Telegram ник, например @nick');
+            return;
+        }
+        if (!payload.dep_station || !payload.arr_station) {
+            $('#sub-form-status').text('Выберите станции из подсказки');
+            return;
+        }
+        if (!payload.date_from || !payload.date_to) {
+            $('#sub-form-status').text('Укажите диапазон дат');
+            return;
+        }
+
+        storeTgNick(payload.tg_id);
+        $('#sub-tg-id').val(payload.tg_id);
+        $('#sub-list-tg-id').val(payload.tg_id);
+        $('#sub-form-status').text('Сохранение…');
+
+        var subId = $('#sub-id').val();
+        var url = subId ? '/api/subscriptions/' + subId : '/api/subscriptions';
+        var method = subId ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+        .then(function(res) {
+            if (!res.ok) {
+                $('#sub-form-status').text('Ошибка: ' + (res.data.details || res.data.error || 'validation'));
+                return;
+            }
+            $('#sub-form-status').text('Подписка сохранена');
+            resetSubscriptionForm();
+            $('#sub-list-tab').tab('show');
+            loadSubscriptions();
+        })
+        .catch(function() {
+            $('#sub-form-status').text('Сетевая ошибка');
+        });
+    });
+
+    $('#subscriptionsList').on('click', '.edit-sub', function() {
+        var id = Number($(this).data('id'));
+        var items = $('#subscriptionsList').data('items') || [];
+        var sub = items.find(function(item) { return item.id === id; });
+        if (sub) {
+            fillSubscriptionForm(sub);
+        }
+    });
+
+    var pendingDeleteId = null;
+
+    function hideDeleteConfirm() {
+        pendingDeleteId = null;
+        $('#subDeleteConfirm').prop('hidden', true);
+    }
+
+    function showDeleteConfirm(id, sub) {
+        pendingDeleteId = id;
+        var label = sub
+            ? ((sub.dep_name || '') + ' → ' + (sub.arr_name || ''))
+            : ('#' + id);
+        $('#subDeleteConfirmText').text('Удалить подписку «' + label + '»?');
+        $('#subDeleteConfirm').prop('hidden', false);
+    }
+
+    $('#subDeleteCancelBtn').on('click', hideDeleteConfirm);
+
+    $('#subDeleteConfirmBtn').on('click', function() {
+        var id = pendingDeleteId;
+        var nick = normalizeTgNick($('#sub-list-tg-id').val() || getStoredTgNick());
+        if (!id || !nick || nick === '@') {
+            hideDeleteConfirm();
+            return;
+        }
+        $('#subDeleteConfirmBtn').prop('disabled', true).text('Удаление…');
+        fetch('/api/subscriptions/' + id + '?tg_id=' + encodeURIComponent(nick), { method: 'DELETE' })
+            .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+            .then(function(res) {
+                hideDeleteConfirm();
+                $('#subDeleteConfirmBtn').prop('disabled', false).text('Удалить');
+                if (res.ok) {
+                    loadSubscriptions();
+                } else {
+                    $('#subscriptionsList').prepend(
+                        '<p class="text-danger mb-2">' + (res.data.error || 'Не удалось удалить') + '</p>'
+                    );
+                }
+            })
+            .catch(function() {
+                hideDeleteConfirm();
+                $('#subDeleteConfirmBtn').prop('disabled', false).text('Удалить');
+            });
+    });
+
+    $('#subscriptionsList').on('click', '.delete-sub', function() {
+        var id = Number($(this).data('id'));
+        var nick = normalizeTgNick($('#sub-list-tg-id').val() || getStoredTgNick());
+        if (!nick || nick === '@') {
+            return;
+        }
+        var items = $('#subscriptionsList').data('items') || [];
+        var sub = items.find(function(item) { return item.id === id; });
+        showDeleteConfirm(id, sub);
+    });
+
+    $('#subscribeModal').on('hidden.bs.modal', hideDeleteConfirm);
+}
 
 
 // блядский календарь как мне он дорог

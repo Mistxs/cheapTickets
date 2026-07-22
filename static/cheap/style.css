@@ -157,3 +157,188 @@ display: inline-block;
 .expensive {
   color: #e45c74;
 }
+
+#subscribeModal .modal-content.subscribe-modal {
+  background-color: rgb(255 255 255 / 12%);
+  color: #e6e6e6;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.75em;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 0.85rem;
+}
+
+#subscribeModal .subscribe-panel {
+  position: relative;
+  background: rgba(12, 9, 8, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.55em;
+  overflow: hidden;
+}
+
+#subscribeModal .modal-top {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+}
+
+#subscribeModal .modal-header {
+  background: transparent;
+  border-bottom: none;
+  border-radius: 0;
+  padding: 1rem 1.25rem 0.35rem;
+  color: #f5f2ef;
+}
+
+#subscribeModal .modal-top .lead,
+#subscribeModal .modal-top .modal-title {
+  color: #f5f2ef !important;
+}
+
+#subscribeModal .modal-body {
+  background: transparent;
+  color: #e6e6e6;
+}
+
+#subscribeModal .modal-footer {
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+}
+
+#subscribeModal .close {
+  color: #fff;
+  text-shadow: none;
+  opacity: 0.85;
+}
+
+#subscribeModal .close:hover {
+  opacity: 1;
+}
+
+#subscribeModal .subscribe-tabs {
+  border-bottom: none;
+  padding: 0 1rem;
+  margin-bottom: 0;
+}
+
+#subscribeModal .subscribe-tabs .nav-link {
+  color: #cfcfcf;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  margin-bottom: 0;
+}
+
+#subscribeModal .subscribe-tabs .nav-link.active {
+  color: #fff;
+  background: transparent;
+  border-bottom-color: #d43267;
+}
+
+#subscribeModal .form-control:disabled,
+#subscribeModal .form-select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+#subscribeModal label {
+  color: #d8d2ce;
+  font-size: 0.9rem;
+}
+
+#subscribeModal .form-control,
+#subscribeModal .form-select {
+  background-color: rgba(34, 28, 25, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fefefe;
+}
+
+#subscribeModal .form-control::placeholder {
+  color: rgba(230, 230, 230, 0.55);
+}
+
+#subscribeModal .form-control:focus,
+#subscribeModal .form-select:focus {
+  color: #fefefe;
+  background-color: #221c19;
+  border-color: rgba(212, 50, 103, 0.55);
+  box-shadow: 0 0 0 0.1rem rgba(212, 50, 103, 0.25);
+}
+
+body.modal-open .modal-backdrop.show {
+  opacity: 0.88;
+  background-color: #000;
+}
+
+.subscription-item {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+}
+
+#subscribeModal .sub-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+#subscribeModal .sub-confirm[hidden] {
+  display: none !important;
+}
+
+#subscribeModal .sub-confirm-card {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(20, 15, 13, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.55em;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  color: #f0ece9;
+}
+
+#subscribeModal .sub-confirm-text {
+  color: #f0ece9;
+  margin: 0;
+}
+
+.btn-outline-light {
+  color: #e6e6e6;
+  border-color: rgba(230, 230, 230, 0.55);
+}
+
+.btn-outline-light:hover {
+  color: #221c19;
+  background: #e6e6e6;
+  border-color: #e6e6e6;
+}
+
+.btn-outline-danger {
+  color: #e45c74;
+  border-color: #e45c74;
+}
+
+.btn-outline-danger:hover {
+  color: #fff;
+  background: #e45c74;
+}
+
+/* autocomplete поверх модалки */
+.ui-autocomplete {
+  z-index: 2000 !important;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.rd-container {
+  z-index: 2100 !important;
+}
