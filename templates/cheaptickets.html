@@ -39,6 +39,9 @@
         <a href="https://t4u.mistxs.ru">t4u</a>
       </nav>
     </div>
+    <div class="ct-topbar-progress" id="ct-topbar-progress" hidden aria-hidden="true">
+      <div class="ct-topbar-progress__bar" id="ct-topbar-progress-bar"></div>
+    </div>
   </header>
 
   <main class="ct-main">
@@ -58,11 +61,11 @@
           </label>
           <label class="ct-field">
             <span>С даты</span>
-            <input type="text" class="form-control" id="start_date" placeholder="ДД-ММ-ГГГГ" autocomplete="off">
+            <input type="text" class="form-control ct-date-input" id="start_date" placeholder="ДД-ММ-ГГГГ" autocomplete="off" readonly inputmode="none">
           </label>
           <label class="ct-field">
             <span>По дату</span>
-            <input type="text" class="form-control" id="end_date" placeholder="ДД-ММ-ГГГГ" autocomplete="off">
+            <input type="text" class="form-control ct-date-input" id="end_date" placeholder="ДД-ММ-ГГГГ" autocomplete="off" readonly inputmode="none">
           </label>
         </div>
 
@@ -202,11 +205,11 @@
                 <div class="ct-modal__grid ct-modal__grid--4">
                   <label class="ct-field" for="sub-date-from">
                     <span>Даты с</span>
-                    <input type="text" class="form-control" id="sub-date-from" placeholder="ДД-ММ-ГГГГ" autocomplete="off">
+                    <input type="text" class="form-control ct-date-input" id="sub-date-from" placeholder="ДД-ММ-ГГГГ" autocomplete="off" readonly inputmode="none">
                   </label>
                   <label class="ct-field" for="sub-date-to">
                     <span>Даты по</span>
-                    <input type="text" class="form-control" id="sub-date-to" placeholder="ДД-ММ-ГГГГ" autocomplete="off">
+                    <input type="text" class="form-control ct-date-input" id="sub-date-to" placeholder="ДД-ММ-ГГГГ" autocomplete="off" readonly inputmode="none">
                   </label>
                   <label class="ct-field" for="sub-price-min">
                     <span>Цена от</span>

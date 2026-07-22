@@ -68,6 +68,23 @@
   border-bottom: 1px solid var(--ct-line);
 }
 
+.ct-topbar-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.ct-topbar-progress[hidden] {
+  display: none !important;
+}
+
+.ct-topbar-progress__bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--ct-accent), var(--ct-accent-2));
+  transition: width 0.25s ease;
+}
+
 .ct-topbar__inner {
   max-width: 1120px;
   margin: 0 auto;
@@ -252,6 +269,11 @@
 
 .ct-body #progress {
   background: linear-gradient(90deg, var(--ct-accent), var(--ct-accent-2)) !important;
+}
+
+.ct-date-input {
+  caret-color: transparent;
+  cursor: pointer;
 }
 
 .ct-favourites {
@@ -1442,7 +1464,7 @@ body.modal-open .modal-backdrop.show {
   -webkit-backdrop-filter: blur(14px);
   padding: 0.85rem !important;
   text-align: center;
-  z-index: 2300 !important;
+  z-index: 35 !important;
 }
 
 .rd-container table,

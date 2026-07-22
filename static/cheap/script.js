@@ -1,8 +1,55 @@
+function setSearchProgress(pct) {
+    var width = Math.max(0, Math.min(100, Number(pct) || 0)) + '%';
+    $('#progress').width(width);
+    var dockBar = document.getElementById('ct-topbar-progress-bar');
+    if (dockBar) dockBar.style.width = width;
+    updateDockedProgressVisibility();
+}
+
+function updateDockedProgressVisibility() {
+    var dock = document.getElementById('ct-topbar-progress');
+    var formProgress = document.querySelector('.mainform .progress');
+    if (!dock || !formProgress) return;
+
+    var searching = formProgress.style.display !== 'none' &&
+        window.getComputedStyle(formProgress).display !== 'none';
+    if (!searching) {
+        dock.hidden = true;
+        dock.setAttribute('aria-hidden', 'true');
+        return;
+    }
+
+    var rect = formProgress.getBoundingClientRect();
+    var topbar = document.querySelector('.ct-topbar');
+    var topbarBottom = topbar ? topbar.getBoundingClientRect().bottom : 0;
+    var visible = rect.bottom > topbarBottom + 4 && rect.top < window.innerHeight - 4;
+    dock.hidden = visible;
+    dock.setAttribute('aria-hidden', visible ? 'true' : 'false');
+}
+
+function startSearchProgress() {
+    setSearchProgress(0);
+    $('.progress').show();
+    updateDockedProgressVisibility();
+}
+
+function stopSearchProgress() {
+    $('.progress').hide();
+    setSearchProgress(0);
+    var dock = document.getElementById('ct-topbar-progress');
+    if (dock) {
+        dock.hidden = true;
+        dock.setAttribute('aria-hidden', 'true');
+    }
+}
+
 $(document).ready(function() {
     $('.progress').hide();
     $('.resrow').hide();
     window.globalData = null;
 
+    window.addEventListener('scroll', updateDockedProgressVisibility, { passive: true });
+    window.addEventListener('resize', updateDockedProgressVisibility);
 
     $('#search_button').on('click', function() {
     var start_date = $('#start_date').val();
@@ -13,7 +60,7 @@ $(document).ready(function() {
     var wagonTypeSelector = document.getElementById('wagonTypeSelector');
     var selectedWagonType = wagonTypeSelector.value;
 
-    $('.progress').show();
+    startSearchProgress();
 
     $('#oldres tbody').empty();
 
@@ -29,12 +76,11 @@ $(document).ready(function() {
             eventSource.onmessage = function(event) {
                 var response = JSON.parse(event.data);
                 var progress = response.progress;
-                $('#progress').width(progress + '%');
-
+                setSearchProgress(progress);
 
                 if (progress === 100) {
                     eventSource.close();
-                    $('.progress').hide();
+                    stopSearchProgress();
                                     var data = response.data;
                 displayResults(data, selectedWagonType);
                 }
