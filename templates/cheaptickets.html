@@ -292,7 +292,10 @@
   <footer class="ct-footer">
     <div class="ct-footer__inner">
       <div class="ct-footer__brand">
-        <img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="64" alt="CheapTickets">
+        <div class="ct-footer__brand-row">
+          <img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="64" alt="">
+          <span class="ct-footer__title">CheapTickets</span>
+        </div>
         <nav class="ct-footer__social">
           <a href="https://github.com/Mistxs" aria-label="GitHub"><i class="fab fa-github"></i></a>
           <a href="https://www.facebook.com/mistxs" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>

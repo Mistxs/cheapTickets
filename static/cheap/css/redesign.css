@@ -914,6 +914,21 @@
   justify-content: space-between;
 }
 
+.ct-footer__brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.ct-footer__title {
+  font-family: var(--ct-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+  color: #fff;
+  line-height: 1.1;
+}
+
 .ct-footer__social {
   display: flex;
   gap: 0.75rem;

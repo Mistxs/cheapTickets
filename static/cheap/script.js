@@ -231,9 +231,16 @@ function setSubDateValue(inputId, dmyValue) {
             weekStart: 1,
             inputFormat: 'DD-MM-YYYY',
             initialValue: dmyValue || undefined,
-            // Append to body so calendar isn't clipped/stacked under the modal panel
-            appendTo: document.body
+            appendTo: document.body,
+            autoHideOnBlur: false,
+            monthFormat: 'MMMM YYYY',
+            weekdayFormat: 'min'
         });
+        if (typeof setupRomeRussianLocale === 'function') {
+            setupRomeRussianLocale();
+        } else if (typeof rome !== 'undefined' && rome.moment) {
+            rome.moment.locale('ru');
+        }
     }
 }
 
