@@ -2,6 +2,7 @@
 import hashlib
 import json
 import time
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pymysql
@@ -20,6 +21,14 @@ RZD_HEADERS = {
     ),
     'host': 'ticket.rzd.ru',
 }
+
+
+def as_date(value):
+    if isinstance(value, datetime):
+        return value.date()
+    if hasattr(value, 'year') and hasattr(value, 'month') and hasattr(value, 'day') and not isinstance(value, str):
+        return value
+    return datetime.strptime(str(value), "%Y-%m-%d").date()
 
 
 def train_on_day(date, cityfrom, cityto):
@@ -81,39 +90,21 @@ def match_cars(trains_payload, car_type, place_type, price_min, price_max):
     return matches
 
 
-def find_matches_for_subscription(sub):
-    date_from = sub["date_from"]
-    date_to = sub["date_to"]
-    if isinstance(date_from, str):
-        date_from = datetime.strptime(date_from, "%Y-%m-%d").date()
-    if isinstance(date_to, str):
-        date_to = datetime.strptime(date_to, "%Y-%m-%d").date()
-
-    today = datetime.now().date()
+def subscription_date_window(sub, today):
+    date_from = as_date(sub["date_from"])
+    date_to = as_date(sub["date_to"])
     if date_to < today:
-        return []
+        return None
     if date_from < today:
         date_from = today
+    return date_from, date_to
 
-    all_matches = []
+
+def iter_dates(date_from, date_to):
     current = date_from
     while current <= date_to:
-        date_str = current.strftime("%Y-%m-%dT00:00:00")
-        try:
-            payload = train_on_day(date_str, sub["dep_station"], sub["arr_station"])
-            day_matches = match_cars(
-                payload,
-                sub["car_type"],
-                sub["place_type"],
-                sub["price_min"],
-                sub["price_max"],
-            )
-            all_matches.extend(day_matches)
-        except Exception as exc:
-            print(f"[sub {sub['id']}] RZD error on {date_str}: {exc}")
-        time.sleep(0.4)
+        yield current
         current += timedelta(days=1)
-    return all_matches
 
 
 def matches_signature(matches):
@@ -182,6 +173,60 @@ def update_notify_signature(sub_id, signature):
         connection.close()
 
 
+def fetch_direction_days(dep_station, arr_station, dates):
+    """Один запрос РЖД на день для направления; результат кэшируется в dict."""
+    cache = {}
+    for day in sorted(dates):
+        date_str = day.strftime("%Y-%m-%dT00:00:00")
+        try:
+            cache[day] = train_on_day(date_str, dep_station, arr_station)
+            print(f"  rzd {dep_station}->{arr_station} {day}: ok")
+        except Exception as exc:
+            print(f"  rzd {dep_station}->{arr_station} {day}: {exc}")
+            cache[day] = {"Trains": []}
+        time.sleep(0.4)
+    return cache
+
+
+def match_subscription_from_cache(sub, window, day_cache):
+    date_from, date_to = window
+    matches = []
+    for day in iter_dates(date_from, date_to):
+        payload = day_cache.get(day) or {"Trains": []}
+        matches.extend(
+            match_cars(
+                payload,
+                sub["car_type"],
+                sub["place_type"],
+                sub["price_min"],
+                sub["price_max"],
+            )
+        )
+    return matches
+
+
+def notify_subscription(sub, matches):
+    if not matches:
+        print(f"  sub#{sub['id']}: no matches")
+        return
+
+    signature = matches_signature(matches)
+    if signature == (sub.get("last_notify_signature") or ""):
+        print(f"  sub#{sub['id']}: same matches, skip notify")
+        return
+
+    text = format_matches(sub, matches)
+    try:
+        resp = tgbot.notify_tickets(sub["tg_id"], text)
+        print(f"  sub#{sub['id']}: notify {resp.status_code} → {sub['tg_id']}")
+        if resp.ok:
+            update_notify_signature(sub["id"], signature)
+        else:
+            print(f"  telegram error: {resp.text[:300]}")
+    except Exception as exc:
+        print(f"  notify failed: {exc}")
+
+
 def run():
     print(f"[{datetime.now()}] checking subscriptions…")
     try:
@@ -194,28 +239,39 @@ def run():
         print("no active subscriptions")
         return
 
-    print(f"active: {len(subs)}")
+    today = datetime.now().date()
+    current = []
+    expired = 0
     for sub in subs:
-        matches = find_matches_for_subscription(sub)
-        if not matches:
-            print(f"  sub#{sub['id']}: no matches")
+        window = subscription_date_window(sub, today)
+        if window is None:
+            expired += 1
             continue
+        current.append((sub, window))
 
-        signature = matches_signature(matches)
-        if signature == (sub.get("last_notify_signature") or ""):
-            print(f"  sub#{sub['id']}: same matches, skip notify")
-            continue
+    print(f"active: {len(subs)}, current: {len(current)}, expired: {expired}")
+    if not current:
+        print("all active subscriptions are in the past — skip RZD")
+        return
 
-        text = format_matches(sub, matches)
-        try:
-            resp = tgbot.notify_tickets(sub["tg_id"], text)
-            print(f"  sub#{sub['id']}: notify {resp.status_code} → {sub['tg_id']}")
-            if resp.ok:
-                update_notify_signature(sub["id"], signature)
-            else:
-                print(f"  telegram error: {resp.text[:300]}")
-        except Exception as exc:
-            print(f"  notify failed: {exc}")
+    by_direction = defaultdict(list)
+    for sub, window in current:
+        key = (int(sub["dep_station"]), int(sub["arr_station"]))
+        by_direction[key].append((sub, window))
+
+    for (dep, arr), group in by_direction.items():
+        dates_needed = set()
+        for _, window in group:
+            dates_needed.update(iter_dates(window[0], window[1]))
+
+        print(
+            f"direction {dep}->{arr}: "
+            f"{len(group)} subs, {len(dates_needed)} days"
+        )
+        day_cache = fetch_direction_days(dep, arr, dates_needed)
+        for sub, window in group:
+            matches = match_subscription_from_cache(sub, window, day_cache)
+            notify_subscription(sub, matches)
 
 
 if __name__ == "__main__":
