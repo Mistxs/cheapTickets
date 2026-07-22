@@ -1,7 +1,7 @@
 $(document).ready(function() {
     $('.progress').hide();
     $('.resrow').hide();
-    var globalData = null;
+    window.globalData = null;
 
 
     $('#search_button').on('click', function() {
@@ -45,6 +45,7 @@ $(document).ready(function() {
 
 
     initCityAutocomplete($('.city-input'));
+    initStyledSelects();
     initSubscriptionsUI();
 });
 
@@ -73,6 +74,45 @@ function initCityAutocomplete($inputs) {
             $(this).attr('data-city-id', ui.item.value);
             return false;
         }
+    });
+}
+
+function refreshSelectMenu($el) {
+    if ($el && $el.length && $el.data('ui-selectmenu')) {
+        $el.selectmenu('refresh');
+    }
+}
+
+function setSelectValue($el, value) {
+    $el.val(value);
+    refreshSelectMenu($el);
+}
+
+function initStyledSelects() {
+    $('#wagonTypeSelector, #sub-car-type, #sub-place-type').each(function() {
+        var $el = $(this);
+        if ($el.data('ui-selectmenu')) {
+            $el.selectmenu('destroy');
+        }
+        var options = {
+            appendTo: 'body',
+            width: null,
+            classes: {
+                'ui-selectmenu-button': 'ct-select-button',
+                'ui-selectmenu-menu': 'ct-select-menu'
+            },
+            position: {
+                my: 'left top+4',
+                at: 'left bottom',
+                collision: 'flipfit'
+            }
+        };
+        if ($el.attr('id') === 'wagonTypeSelector') {
+            options.change = function() {
+                onChangeWagonType();
+            };
+        }
+        $el.selectmenu(options);
     });
 }
 
@@ -157,6 +197,14 @@ function syncPlaceTypeForCarType() {
     } else {
         $place.prop('disabled', false);
     }
+    if ($place.data('ui-selectmenu')) {
+        if (carType === 'СИД') {
+            $place.selectmenu('disable');
+        } else {
+            $place.selectmenu('enable');
+        }
+        $place.selectmenu('refresh');
+    }
 }
 
 function resetSubscriptionForm() {
@@ -169,6 +217,7 @@ function resetSubscriptionForm() {
         .attr('data-city-id', $('#city2-input').attr('data-city-id') || '');
     $('#sub-car-type').val('ПЛАЦ');
     $('#sub-place-type').val('lower');
+    refreshSelectMenu($('#sub-car-type'));
     syncPlaceTypeForCarType();
     $('#sub-price-min').val(0);
     $('#sub-price-max').val(3000);
@@ -187,8 +236,8 @@ function fillSubscriptionForm(sub) {
     $('#sub-id').val(sub.id);
     $('#sub-city1').val(sub.dep_name || '').attr('data-city-id', sub.dep_station || '');
     $('#sub-city2').val(sub.arr_name || '').attr('data-city-id', sub.arr_station || '');
-    $('#sub-car-type').val(sub.car_type);
-    $('#sub-place-type').val(sub.place_type);
+    setSelectValue($('#sub-car-type'), sub.car_type);
+    setSelectValue($('#sub-place-type'), sub.place_type);
     syncPlaceTypeForCarType();
     $('#sub-price-min').val(sub.price_min);
     $('#sub-price-max').val(sub.price_max);
@@ -216,21 +265,21 @@ function carTypeLabel(value) {
 function renderSubscriptions(list) {
     var $box = $('#subscriptionsList');
     if (!list.length) {
-        $box.html('<p class="text-muted mb-0">Активных подписок нет</p>');
+        $box.html('<p class="ct-modal__empty">Активных подписок нет</p>');
         return;
     }
     var html = list.map(function(sub) {
         return (
-            '<div class="subscription-item mb-3 p-3">' +
-              '<div><strong>' + (sub.dep_name || '') + ' → ' + (sub.arr_name || '') + '</strong></div>' +
-              '<div class="small">' + carTypeLabel(sub.car_type) + ', ' + placeTypeLabel(sub.place_type) +
-                ', ' + Math.round(sub.price_min) + '–' + Math.round(sub.price_max) + ' ₽</div>' +
-              '<div class="small">' + isoToDmy(sub.date_from) + ' … ' + isoToDmy(sub.date_to) + '</div>' +
-              '<div class="mt-2">' +
-                '<button type="button" class="btn btn-sm btn-primary mr-2 edit-sub" data-id="' + sub.id + '">Редактировать</button>' +
+            '<article class="subscription-item">' +
+              '<div class="subscription-item__route">' + (sub.dep_name || '') + ' → ' + (sub.arr_name || '') + '</div>' +
+              '<div class="subscription-item__meta">' + carTypeLabel(sub.car_type) + ' · ' + placeTypeLabel(sub.place_type) +
+                ' · ' + Math.round(sub.price_min) + '–' + Math.round(sub.price_max) + ' ₽</div>' +
+              '<div class="subscription-item__meta">' + isoToDmy(sub.date_from) + ' — ' + isoToDmy(sub.date_to) + '</div>' +
+              '<div class="subscription-item__actions">' +
+                '<button type="button" class="btn btn-sm btn-primary edit-sub" data-id="' + sub.id + '">Редактировать</button>' +
                 '<button type="button" class="btn btn-sm btn-outline-danger delete-sub" data-id="' + sub.id + '">Удалить</button>' +
               '</div>' +
-            '</div>'
+            '</article>'
         );
     }).join('');
     $box.html(html);
@@ -318,6 +367,8 @@ function initSubscriptionsUI() {
 
     $('#subscribeModal').on('shown.bs.modal', function() {
         initCityAutocomplete($('#sub-city1, #sub-city2'));
+        refreshSelectMenu($('#sub-car-type'));
+        refreshSelectMenu($('#sub-place-type'));
     });
 
     $('#sub-list-tab').on('shown.bs.tab', function() {
@@ -536,14 +587,26 @@ function initSubscriptionsUI() {
     Calendar.prototype.drawDays = function() {
         var startDay = new Date(year, month, 0).getDay(),
             nDays = new Date(year, month + 1, 0).getDate(),
-            n = startDay;
+            n = startDay,
+            prevMonthDays = new Date(year, month, 0).getDate();
 
-        // очистка всех дней нахрен
         for(var k = 0; k < 42; k++) {
             days[k].innerHTML = '';
             days[k].id = '';
             days[k].className = '';
-            days[k].setAttribute('data-visible_date', ''); // Добавляем атрибут с пустым значением
+            days[k].removeAttribute('data-ticket-info');
+            days[k].removeAttribute('data-ticket-type');
+            days[k].setAttribute('data-visible_date', '');
+        }
+
+        for (var p = 0; p < startDay; p++) {
+            var prevDayNum = prevMonthDays - startDay + p + 1;
+            var prevSpan = document.createElement('span');
+            prevSpan.className = 'day';
+            prevSpan.textContent = prevDayNum;
+            days[p].appendChild(prevSpan);
+            days[p].id = 'disabled';
+            days[p].className = 'adj-month adj-month--prev';
         }
 
         for (var i = 1; i <= nDays; i++) {
@@ -551,17 +614,22 @@ function initSubscriptionsUI() {
             dayElement.className = 'day';
             dayElement.textContent = i;
             days[n].appendChild(dayElement);
-            days[n].setAttribute('data-visible_date', year + '-' + (month + 1).toString().padStart(2, '0') + '-' + i.toString().padStart(2, '0')); // Заполняем атрибут соответствующей датой
+            days[n].setAttribute('data-visible_date', year + '-' + (month + 1).toString().padStart(2, '0') + '-' + i.toString().padStart(2, '0'));
             n++;
         }
 
-
+        var nextDay = 1;
+        for (var f = n; f < 42; f++) {
+            var nextSpan = document.createElement('span');
+            nextSpan.className = 'day';
+            nextSpan.textContent = nextDay++;
+            days[f].appendChild(nextSpan);
+            days[f].id = 'disabled';
+            days[f].className = 'adj-month adj-month--next';
+        }
 
         for(var j = 0; j < 42; j++) {
-            if(days[j].innerHTML === ""){
-                days[j].id = "disabled";
-            }
-            else if(j === day + startDay - 1){
+            if(days[j].id !== 'disabled' && j === day + startDay - 1){
                 if((this.options && (month === setDate.getMonth()) && (year === setDate.getFullYear())) || (!this.options && (month === today.getMonth())&&(year===today.getFullYear()))){
                     this.drawHeader(day);
                     days[j].id = "today";
@@ -577,13 +645,20 @@ function initSubscriptionsUI() {
     };
 
     Calendar.prototype.clickDay = function(o) {
+        if (o.id === 'disabled' || o.classList.contains('adj-month')) {
+            return;
+        }
         var selected = document.querySelector(".selected");
         if (selected) {
             selected.classList.remove("selected");
         }
         o.classList.add("selected");
 
-        var dayText = o.querySelector('.day').textContent; // Получаем текст дня из span.day
+        var dayNode = o.querySelector('.day');
+        if (!dayNode) {
+            return;
+        }
+        var dayText = dayNode.textContent;
         var rawTicket = o.getAttribute('data-ticket-info');
         var ticketInfo = null;
         if (rawTicket) {
@@ -594,7 +669,7 @@ function initSubscriptionsUI() {
             }
         }
         selectedDay = new Date(year, month, dayText);
-        this.drawHeader(dayText, ticketInfo); // Передаем текст дня и распарсенный JSON
+        this.drawHeader(dayText, ticketInfo);
     };
 
 
@@ -607,6 +682,7 @@ function initSubscriptionsUI() {
             month = month - 1;
         }
         this.drawHeader(1);
+        this.animateMonthChange();
         this.drawDays();
         onChangeWagonType();
 
@@ -620,8 +696,17 @@ function initSubscriptionsUI() {
             month = month + 1;
         }
         this.drawHeader(1);
+        this.animateMonthChange();
         this.drawDays();
         onChangeWagonType();
+    };
+
+    Calendar.prototype.animateMonthChange = function() {
+        var grid = document.querySelector('.ct-cal-grid');
+        if (!grid) return;
+        grid.classList.remove('ct-cal-grid--animate');
+        void grid.offsetWidth;
+        grid.classList.add('ct-cal-grid--animate');
     };
 
     var calendar = new Calendar();
@@ -634,7 +719,7 @@ function initSubscriptionsUI() {
 
 
 function displayResults(data, selectedWagonType) {
-    globalData = data;
+    window.globalData = data;
     var calendarTable = document.getElementById('calendar');
     var cells = calendarTable.querySelectorAll('td');
 
@@ -643,7 +728,10 @@ function displayResults(data, selectedWagonType) {
         var priceElement = cell.querySelector('.price');
         if (priceElement) {
             priceElement.textContent = '';
+            priceElement.classList.remove('cheapper', 'most-cheapper', 'expensive');
         }
+        cell.removeAttribute('data-ticket-info');
+        cell.removeAttribute('data-ticket-type');
     }
 
     for (var date in data) {
@@ -692,32 +780,35 @@ function displayResults(data, selectedWagonType) {
 }
 
 function onChangeWagonType() {
-    var selectedWagonType = wagonTypeSelector.value;
-    if (globalData) {
-        displayResults(globalData, selectedWagonType);
+    var selector = document.getElementById('wagonTypeSelector');
+    if (!selector || !window.globalData) {
+        return;
     }
+    displayResults(window.globalData, selector.value);
 }
 
-wagonTypeSelector.addEventListener('change', onChangeWagonType);
-
-
 function updatePriceClasses() {
-  const priceElements = document.querySelectorAll('.price');
-  const prices = [];
+  const priceElements = Array.from(document.querySelectorAll('#calendar .price'));
+  const prices = priceElements
+    .map(function(element) { return parseFloat(element.textContent); })
+    .filter(function(price) { return !isNaN(price) && price > 0; });
 
-  priceElements.forEach(element => {
+  if (!prices.length) {
+    priceElements.forEach(function(element) {
+      element.classList.remove('cheapper', 'most-cheapper', 'expensive');
+    });
+    return;
+  }
+
+  const minPrice = Math.min.apply(null, prices);
+  const averagePrice = prices.reduce(function(sum, price) { return sum + price; }, 0) / prices.length;
+
+  priceElements.forEach(function(element) {
     const price = parseFloat(element.textContent);
-    prices.push(price);
-  });
-
-  const minPrice = Math.min(...prices);
-  const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-
-  priceElements.forEach(element => {
-    const price = parseFloat(element.textContent);
-
     element.classList.remove('cheapper', 'most-cheapper', 'expensive');
-
+    if (isNaN(price) || price <= 0) {
+      return;
+    }
     if (price === minPrice) {
       element.classList.add('cheapper');
     } else if (price < averagePrice) {

@@ -28,9 +28,13 @@
 
   <header class="ct-topbar">
     <div class="ct-topbar__inner">
-      <a class="ct-topbar__brand" href="https://mistxs.ru">mistxs</a>
+      <a class="ct-brand-logo" href="https://mistxs.ru" aria-label="mistxs cheaptickets">
+        <span class="ct-brand-mistxs">mistxs</span>
+        <span class="ct-brand-sep" aria-hidden="true">|</span>
+        <span class="ct-brand-product">cheaptickets</span>
+      </a>
       <nav class="ct-topbar__nav">
-        <a class="is-active" href="https://ct.spica.mistxs.ru">cheaptickets</a>
+        <a href="https://music.mistxs.ru">music</a>
         <a href="https://ruello.mistxs.ru">ruello</a>
         <a href="https://t4u.mistxs.ru">t4u</a>
       </nav>
@@ -92,41 +96,52 @@
           <option value="СВ">СВ</option>
         </select>
       </label>
-      <p class="ct-toolbar__hint">Цены на днях: зелёный — ниже среднего, голубой — минимум</p>
+      <p class="ct-toolbar__hint">Цены на днях: зелёный — самый дешёвый, синий — ниже среднего</p>
     </section>
 
     <section class="ct-results resrow">
-      <div class="elegant-calencar d-md-flex ct-calendar">
-        <div class="wrap-header d-flex calwrapper">
-          <div id="header" class="p-0">
-            <div class="head-info">
-              <div class="head-day"></div>
-              <div class="head-month"></div>
-              <div class="ticket-info"></div>
+      <div class="ct-calendar">
+        <div class="ct-cal-body elegant-calencar d-md-flex">
+          <aside class="ct-cal-detail wrap-header calwrapper">
+            <div id="header" class="p-0">
+              <div class="head-info">
+                <div class="ct-cal-detail__day">
+                  <div class="head-day"></div>
+                  <div class="head-month"></div>
+                </div>
+                <div class="ticket-info"></div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="ct-cal-main calendar-wrap">
+            <button type="button" class="pre-button ct-cal-nav ct-cal-nav--prev" aria-label="Предыдущий месяц">
+              <i class="fa fa-chevron-left" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="next-button ct-cal-nav ct-cal-nav--next" aria-label="Следующий месяц">
+              <i class="fa fa-chevron-right" aria-hidden="true"></i>
+            </button>
+            <div class="ct-cal-month-row">
+              <div class="cal-month"></div>
+            </div>
+            <div class="ct-cal-grid">
+              <table id="calendar">
+                <thead>
+                  <tr>
+                    <th>ПН</th><th>ВТ</th><th>СР</th><th>ЧТ</th><th>ПТ</th><th>СБ</th><th>ВС</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-        <div class="calendar-wrap">
-          <div class="w-100 button-wrap">
-            <div class="pre-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-left"></i></div>
-            <div class="cal-month"></div>
-            <div class="next-button d-flex align-items-center justify-content-center"><i class="fa fa-chevron-right"></i></div>
-          </div>
-          <table id="calendar">
-            <thead>
-              <tr>
-                <th>ПН</th><th>ВТ</th><th>СР</th><th>ЧТ</th><th>ПТ</th><th>СБ</th><th>ВС</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </section>
@@ -146,104 +161,111 @@
 
   <div class="modal fade" id="subscribeModal" tabindex="-1" role="dialog" aria-labelledby="subscribeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-      <div class="modal-content glass-container subscribe-modal">
-        <div class="subscribe-panel">
-          <div class="modal-top">
-            <div class="modal-header">
-              <h5 class="modal-title lead mb-0" id="subscribeModalLabel">Подписка на билеты</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+      <div class="modal-content ct-modal">
+        <div class="ct-modal__panel subscribe-panel">
+          <div class="ct-modal__top modal-top">
+            <div class="ct-modal__header modal-header">
+              <div>
+                <p class="ct-modal__eyebrow">Telegram</p>
+                <h5 class="modal-title" id="subscribeModalLabel">Подписка на билеты</h5>
+              </div>
+              <button type="button" class="ct-modal__close close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
-            <ul class="nav nav-tabs subscribe-tabs" id="subscribeTabs" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="sub-form-tab" data-toggle="tab" href="#sub-form-pane" role="tab">Новая / редактирование</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" id="sub-list-tab" data-toggle="tab" href="#sub-list-pane" role="tab">Текущие подписки</a>
-              </li>
-            </ul>
+            <div class="ct-modal__tabs">
+              <ul class="nav nav-tabs subscribe-tabs" id="subscribeTabs" role="tablist">
+                <li class="nav-item">
+                  <a class="nav-link active" id="sub-form-tab" data-toggle="tab" href="#sub-form-pane" role="tab">Новая / редактирование</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="sub-list-tab" data-toggle="tab" href="#sub-list-pane" role="tab">Текущие подписки</a>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div class="modal-body">
+
+          <div class="modal-body ct-modal__body">
             <div class="tab-content">
               <div class="tab-pane fade show active" id="sub-form-pane" role="tabpanel">
                 <input type="hidden" id="sub-id" value="">
-                <div class="form-row">
-                  <div class="form-group col-md-6">
-                    <label for="sub-city1">Станция отправления</label>
+                <div class="ct-modal__grid ct-modal__grid--2">
+                  <label class="ct-field" for="sub-city1">
+                    <span>Откуда</span>
                     <input type="text" class="form-control city-input sub-city-input" id="sub-city1" placeholder="Станция отправления" data-city-id="" autocomplete="off">
-                  </div>
-                  <div class="form-group col-md-6">
-                    <label for="sub-city2">Станция назначения</label>
+                  </label>
+                  <label class="ct-field" for="sub-city2">
+                    <span>Куда</span>
                     <input type="text" class="form-control city-input sub-city-input" id="sub-city2" placeholder="Станция назначения" data-city-id="" autocomplete="off">
-                  </div>
+                  </label>
                 </div>
-                <div class="form-row">
-                  <div class="form-group col-md-3">
-                    <label for="sub-date-from">Даты с</label>
-                    <input type="text" class="form-control" id="sub-date-from" placeholder="Поиск с" autocomplete="off">
-                  </div>
-                  <div class="form-group col-md-3">
-                    <label for="sub-date-to">Даты по</label>
-                    <input type="text" class="form-control" id="sub-date-to" placeholder="Поиск до" autocomplete="off">
-                  </div>
-                  <div class="form-group col-md-3">
-                    <label for="sub-price-min">Цена от</label>
+                <div class="ct-modal__grid ct-modal__grid--4">
+                  <label class="ct-field" for="sub-date-from">
+                    <span>Даты с</span>
+                    <input type="text" class="form-control" id="sub-date-from" placeholder="ДД-ММ-ГГГГ" autocomplete="off">
+                  </label>
+                  <label class="ct-field" for="sub-date-to">
+                    <span>Даты по</span>
+                    <input type="text" class="form-control" id="sub-date-to" placeholder="ДД-ММ-ГГГГ" autocomplete="off">
+                  </label>
+                  <label class="ct-field" for="sub-price-min">
+                    <span>Цена от</span>
                     <input type="number" class="form-control" id="sub-price-min" value="0" min="0">
-                  </div>
-                  <div class="form-group col-md-3">
-                    <label for="sub-price-max">Цена до</label>
+                  </label>
+                  <label class="ct-field" for="sub-price-max">
+                    <span>Цена до</span>
                     <input type="number" class="form-control" id="sub-price-max" value="3000" min="0">
-                  </div>
+                  </label>
                 </div>
-                <div class="form-row">
-                  <div class="form-group col-md-4">
-                    <label for="sub-car-type">Тип вагона</label>
+                <div class="ct-modal__grid ct-modal__grid--3">
+                  <label class="ct-field" for="sub-car-type">
+                    <span>Тип вагона</span>
                     <select id="sub-car-type" class="form-control form-select">
                       <option value="ПЛАЦ">Плацкарт</option>
                       <option value="КУПЕ">Купе</option>
                       <option value="СИД">Сидячее</option>
                       <option value="ANY">Не имеет значения</option>
                     </select>
-                  </div>
-                  <div class="form-group col-md-4">
-                    <label for="sub-place-type">Тип места</label>
+                  </label>
+                  <label class="ct-field" for="sub-place-type">
+                    <span>Тип места</span>
                     <select id="sub-place-type" class="form-control form-select">
                       <option value="lower">Нижнее</option>
                       <option value="upper">Верхнее</option>
                       <option value="any">Любое</option>
                     </select>
-                  </div>
-                  <div class="form-group col-md-4">
-                    <label for="sub-tg-id">Telegram ник</label>
+                  </label>
+                  <label class="ct-field" for="sub-tg-id">
+                    <span>Telegram ник</span>
                     <input type="text" class="form-control" id="sub-tg-id" placeholder="@nick" autocomplete="off">
-                  </div>
+                  </label>
                 </div>
-                <div id="sub-form-status" class="small text-muted"></div>
+                <div id="sub-form-status" class="ct-modal__status"></div>
               </div>
+
               <div class="tab-pane fade" id="sub-list-pane" role="tabpanel">
-                <div class="form-group">
-                  <label for="sub-list-tg-id">Telegram ник</label>
-                  <div class="input-group">
+                <label class="ct-field" for="sub-list-tg-id">
+                  <span>Telegram ник</span>
+                  <div class="ct-modal__inline">
                     <input type="text" class="form-control" id="sub-list-tg-id" placeholder="@nick">
-                    <div class="input-group-append">
-                      <button class="btn btn-primary" type="button" id="loadSubscriptionsBtn">Показать</button>
-                    </div>
+                    <button class="btn btn-primary" type="button" id="loadSubscriptionsBtn">Показать</button>
                   </div>
-                </div>
-                <div id="subscriptionsList"></div>
+                </label>
+                <div id="subscriptionsList" class="ct-modal__list"></div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
+
+          <div class="modal-footer ct-modal__footer">
             <button type="button" class="btn btn-outline-light" data-dismiss="modal">Закрыть</button>
             <button type="button" class="btn btn-primary" id="saveSubscriptionBtn">Отправить</button>
           </div>
+
           <div class="sub-confirm" id="subDeleteConfirm" hidden>
             <div class="sub-confirm-card">
-              <p class="sub-confirm-text mb-3" id="subDeleteConfirmText">Удалить подписку?</p>
-              <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-outline-light btn-sm mr-2" id="subDeleteCancelBtn">Отмена</button>
+              <p class="sub-confirm-text" id="subDeleteConfirmText">Удалить подписку?</p>
+              <div class="ct-modal__confirm-actions">
+                <button type="button" class="btn btn-outline-light btn-sm" id="subDeleteCancelBtn">Отмена</button>
                 <button type="button" class="btn btn-primary btn-sm" id="subDeleteConfirmBtn">Удалить</button>
               </div>
             </div>
@@ -259,13 +281,18 @@
         <img src="{{ url_for('static', filename='cheap/images/logo.png') }}" loading="lazy" height="64" alt="CheapTickets">
         <nav class="ct-footer__social">
           <a href="https://github.com/Mistxs" aria-label="GitHub"><i class="fab fa-github"></i></a>
+          <a href="https://www.facebook.com/mistxs" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://instagram.com/mistxs" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://linkedin.com/aafilippov" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
           <a href="https://t.me/mistxs" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
           <a href="http://vk.com/anatoliyfilippov" aria-label="VK"><i class="fab fa-vk"></i></a>
         </nav>
       </div>
       <div class="ct-footer__legal">
-        <p>Информация для ознакомления. Бронь и оплата — только на портале РЖД.</p>
-        <p>© 2026 <a href="https://mistxs.ru" target="_blank" rel="noopener">mistxs</a></p>
+        <p>Информация предоставлена исключительно в ознакомительных целях.</p>
+        <p>Сервис не предлагает возможности брони, оплаты, или резервирования билетов.</p>
+        <p>Информация о билетах, стоимости и наличии мест предоставляется с официального портала ПАО "РЖД"</p>
+        <p class="ct-footer__copy">© 2024–2026, сделано с ❤️ <a href="https://mistxs.ru" target="_blank" rel="noopener">mistxs</a></p>
       </div>
     </div>
   </footer>
