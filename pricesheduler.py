@@ -1,5 +1,6 @@
 """Фоновая проверка подписок: ищет билеты по условиям и шлёт уведомления в Telegram."""
 import hashlib
+import html
 import json
 import time
 from collections import defaultdict
@@ -117,25 +118,72 @@ def matches_signature(matches):
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 
+def _escape(value):
+    return html.escape(str(value if value is not None else ""), quote=False)
+
+
+def _place_label(place_type, match):
+    if place_type == "lower":
+        return "Нижнее"
+    if place_type == "upper":
+        return "Верхнее"
+    if match.get("lower") and not match.get("upper"):
+        return "Нижнее"
+    if match.get("upper") and not match.get("lower"):
+        return "Верхнее"
+    return "Любое"
+
+
+def _car_label(car_type_name):
+    mapping = {
+        "ПЛАЦ": "Плацкарт",
+        "КУПЕ": "Купе",
+        "СИД": "Сидячее",
+        "ANY": "Любой",
+    }
+    return mapping.get(car_type_name, car_type_name or "—")
+
+
 def format_matches(sub, matches):
-    place_labels = {"lower": "нижнее", "upper": "верхнее", "any": "любое"}
-    car_labels = {"ANY": "любой вагон", "ПЛАЦ": "плацкарт", "КУПЕ": "купе", "СИД": "сидячее"}
-    place = place_labels.get(sub["place_type"], sub["place_type"])
-    car = car_labels.get(sub["car_type"], sub["car_type"])
-    lines = [
-        f"{sub['dep_name']} → {sub['arr_name']}",
-        f"{car}, место: {place}, до {sub['price_max']:.0f} ₽",
+    route = f"{_escape(sub['dep_name'])} → {_escape(sub['arr_name'])}"
+    blocks = [
+        "<b>🎫 Есть билеты</b>",
+        f"<b>{route}</b>",
         "",
     ]
-    for m in matches[:12]:
-        dep = m["departure"].replace("T", " ")
-        lines.append(
-            f"#{m['train']} {dep} — {m['price']:.0f} ₽ "
-            f"(↓{m['lower']} ↑{m['upper']})"
-        )
-    if len(matches) > 12:
-        lines.append(f"…и ещё {len(matches) - 12}")
-    return "\n".join(lines)
+
+    for m in matches[:8]:
+        try:
+            dep_dt = datetime.strptime(m["departure"], "%Y-%m-%dT%H:%M:%S")
+            date_s = dep_dt.strftime("%d.%m.%Y")
+            time_s = dep_dt.strftime("%H:%M")
+        except Exception:
+            date_s = _escape(m.get("departure", "—"))
+            time_s = "—"
+
+        place = _place_label(sub["place_type"], m)
+        car = _car_label(m.get("car_type") or sub["car_type"])
+        qty_bits = []
+        if m.get("lower"):
+            qty_bits.append(f"↓{m['lower']}")
+        if m.get("upper"):
+            qty_bits.append(f"↑{m['upper']}")
+        qty = f" ({' '.join(qty_bits)})" if qty_bits else ""
+
+        blocks.extend([
+            f"<b>🗓️ Дата</b> — {date_s}",
+            f"<b>🕗 Время</b> — {time_s}",
+            f"<b>🚂 Поезд</b> — {_escape(m.get('train', '—'))}",
+            "———",
+            f"Место: {place} — {car}{qty}",
+            f"Цена: <b>{m['price']:.0f}₽</b>",
+            "",
+        ])
+
+    if len(matches) > 8:
+        blocks.append(f"<i>…и ещё {len(matches) - 8}</i>")
+
+    return "\n".join(blocks).rstrip()
 
 
 def load_active_subscriptions():

@@ -1,3 +1,4 @@
+import html
 import os
 
 import requests
@@ -13,7 +14,7 @@ def _proxies():
     return {'http': BOT_PROXY, 'https': BOT_PROXY}
 
 
-def send_telegram_message(chat_id, message, token=None):
+def send_telegram_message(chat_id, message, token=None, parse_mode='HTML'):
     token = token or BOT_TOKEN
     chat_id = str(chat_id).strip()
     if chat_id and not chat_id.lstrip('-').isdigit() and not chat_id.startswith('@'):
@@ -23,11 +24,11 @@ def send_telegram_message(chat_id, message, token=None):
         'chat_id': chat_id,
         'text': message,
         'disable_web_page_preview': True,
+        'parse_mode': parse_mode,
     }
     response = requests.post(url, data=payload, timeout=30, proxies=_proxies())
     return response
 
 
 def notify_tickets(chat_id, info):
-    message = f"ЕСТЬ БИЛЕТЫ\n{info}"
-    return send_telegram_message(chat_id, message)
+    return send_telegram_message(chat_id, info)
