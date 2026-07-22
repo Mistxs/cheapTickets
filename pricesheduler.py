@@ -69,13 +69,24 @@ def match_cars(trains_payload, car_type, place_type, price_min, price_max):
             lower_qty = int(car.get("LowerPlaceQuantity") or 0)
             upper_qty = int(car.get("UpperPlaceQuantity") or 0)
             place_qty = int(car.get("PlaceQuantity") or 0)
+            # сидячие и похожие: нет низа/верха, только PlaceQuantity
+            no_berths = lower_qty == 0 and upper_qty == 0
 
-            if place_type == "lower" and lower_qty <= 0:
-                continue
-            if place_type == "upper" and upper_qty <= 0:
-                continue
-            if place_type == "any" and (lower_qty + upper_qty + place_qty) <= 0:
-                continue
+            if place_type == "lower":
+                if no_berths:
+                    if place_qty <= 0:
+                        continue
+                elif lower_qty <= 0:
+                    continue
+            elif place_type == "upper":
+                if no_berths:
+                    if place_qty <= 0:
+                        continue
+                elif upper_qty <= 0:
+                    continue
+            elif place_type == "any":
+                if (lower_qty + upper_qty + place_qty) <= 0:
+                    continue
 
             matches.append({
                 "train": item.get("DisplayTrainNumber"),
@@ -88,6 +99,7 @@ def match_cars(trains_payload, car_type, place_type, price_min, price_max):
                 "price": price,
                 "lower": lower_qty,
                 "upper": upper_qty,
+                "places": place_qty,
             })
     return matches
 
@@ -170,6 +182,8 @@ def format_matches(sub, matches):
             qty_bits.append(f"↓{m['lower']}")
         if m.get("upper"):
             qty_bits.append(f"↑{m['upper']}")
+        if not qty_bits and m.get("places"):
+            qty_bits.append(f"×{m['places']}")
         qty = f" ({' '.join(qty_bits)})" if qty_bits else ""
 
         blocks.extend([
