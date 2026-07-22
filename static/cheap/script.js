@@ -129,13 +129,22 @@ function refreshSelectMenu($el) {
     }
 }
 
+function normalizeNotifyHour(value, fallback) {
+    var raw = String(value == null || value === '' ? (fallback || '08:00') : value).slice(0, 5);
+    var hour = parseInt(raw.split(':')[0], 10);
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+        hour = parseInt(String(fallback || '08:00').slice(0, 2), 10) || 0;
+    }
+    return pad2(hour) + ':00';
+}
+
 function setSelectValue($el, value) {
     $el.val(value);
     refreshSelectMenu($el);
 }
 
 function initStyledSelects() {
-    $('#wagonTypeSelector, #sub-car-type, #sub-place-type').each(function() {
+    $('#wagonTypeSelector, #sub-car-type, #sub-place-type, #sub-notify-from, #sub-notify-to').each(function() {
         var $el = $(this);
         if ($el.data('ui-selectmenu')) {
             $el.selectmenu('destroy');
@@ -278,8 +287,8 @@ function resetSubscriptionForm() {
     syncPlaceTypeForCarType();
     $('#sub-price-min').val(0);
     $('#sub-price-max').val(3000);
-    $('#sub-notify-from').val('08:00');
-    $('#sub-notify-to').val('23:00');
+    setSelectValue($('#sub-notify-from'), '08:00');
+    setSelectValue($('#sub-notify-to'), '23:00');
 
     var dateFrom = $('#start_date').val() || dmyTodayPlus(1);
     var dateTo = $('#end_date').val() || dmyTodayPlus(14);
@@ -302,8 +311,8 @@ function fillSubscriptionForm(sub) {
     $('#sub-price-max').val(sub.price_max);
     setSubDateValue('sub-date-from', isoToDmy(sub.date_from));
     setSubDateValue('sub-date-to', isoToDmy(sub.date_to));
-    $('#sub-notify-from').val((sub.notify_from || '08:00').slice(0, 5));
-    $('#sub-notify-to').val((sub.notify_to || '23:00').slice(0, 5));
+    setSelectValue($('#sub-notify-from'), normalizeNotifyHour(sub.notify_from, '08:00'));
+    setSelectValue($('#sub-notify-to'), normalizeNotifyHour(sub.notify_to, '23:00'));
     $('#sub-tg-id').val(normalizeTgNick(sub.tg_id));
     $('#saveSubscriptionBtn').text('Сохранить').show();
     $('#sub-form-tab').tab('show');
@@ -435,6 +444,8 @@ function initSubscriptionsUI() {
         initCityAutocomplete($('#sub-city1, #sub-city2'));
         refreshSelectMenu($('#sub-car-type'));
         refreshSelectMenu($('#sub-place-type'));
+        refreshSelectMenu($('#sub-notify-from'));
+        refreshSelectMenu($('#sub-notify-to'));
     });
 
     $('#sub-list-tab').on('shown.bs.tab', function() {

@@ -892,6 +892,14 @@
   justify-content: flex-end;
 }
 
+.ct-subscribe__actions .btn {
+  flex: 1 1 calc(50% - 0.35rem);
+  min-width: 0;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
+}
+
 .ct-body .btn-outline-light {
   border-radius: 12px !important;
   min-height: 44px;
@@ -1117,6 +1125,20 @@
 
 #subscribeModal .ct-field {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#subscribeModal .ct-modal__grid--notify {
+  max-width: 22rem;
+}
+
+#subscribeModal .ct-modal__grid--notify .form-control,
+#subscribeModal .ct-modal__grid--notify .form-select,
+#subscribeModal .ct-modal__grid--notify .ui-selectmenu-button {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
 
 #subscribeModal .ct-field > span,
@@ -1310,6 +1332,10 @@ body.modal-open .modal-backdrop.show {
   #subscribeModal .ct-modal__grid--4 {
     grid-template-columns: 1fr 1fr;
   }
+
+  #subscribeModal .ct-modal__grid--notify {
+    max-width: none;
+  }
 }
 
 @media (max-width: 575.98px) {
@@ -1466,7 +1492,9 @@ body.modal-open .modal-backdrop.show {
 
 #wagonTypeSelector + .ui-selectmenu-button,
 #sub-car-type + .ui-selectmenu-button,
-#sub-place-type + .ui-selectmenu-button {
+#sub-place-type + .ui-selectmenu-button,
+#sub-notify-from + .ui-selectmenu-button,
+#sub-notify-to + .ui-selectmenu-button {
   width: 100% !important;
 }
 
@@ -1626,7 +1654,14 @@ body.modal-open .rd-container {
   }
 
   .ct-subscribe__actions {
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-content: stretch;
+  }
+
+  .ct-subscribe__actions .btn {
+    flex: none;
+    width: 100%;
   }
 }
 

@@ -243,14 +243,22 @@
                     <input type="text" class="form-control" id="sub-tg-id" placeholder="@nick" autocomplete="off">
                   </label>
                 </div>
-                <div class="ct-modal__grid ct-modal__grid--2">
+                <div class="ct-modal__grid ct-modal__grid--2 ct-modal__grid--notify">
                   <label class="ct-field" for="sub-notify-from">
                     <span>Оповещения с</span>
-                    <input type="time" class="form-control" id="sub-notify-from" value="08:00" step="60">
+                    <select id="sub-notify-from" class="form-control form-select">
+                      {% for h in range(24) %}
+                      <option value="{{ '%02d'|format(h) }}:00"{% if h == 8 %} selected{% endif %}>{{ '%02d'|format(h) }}:00</option>
+                      {% endfor %}
+                    </select>
                   </label>
                   <label class="ct-field" for="sub-notify-to">
                     <span>Оповещения по</span>
-                    <input type="time" class="form-control" id="sub-notify-to" value="23:00" step="60">
+                    <select id="sub-notify-to" class="form-control form-select">
+                      {% for h in range(24) %}
+                      <option value="{{ '%02d'|format(h) }}:00"{% if h == 23 %} selected{% endif %}>{{ '%02d'|format(h) }}:00</option>
+                      {% endfor %}
+                    </select>
                   </label>
                 </div>
                 <p class="ct-modal__hint">Поиск билетов и Telegram-уведомления только в этом интервале (МСК). Ночью проверки не выполняются.</p>
