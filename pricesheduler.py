@@ -101,7 +101,30 @@ def match_cars(trains_payload, car_type, place_type, price_min, price_max):
                 "upper": upper_qty,
                 "places": place_qty,
             })
-    return matches
+    return dedupe_matches(matches)
+
+
+def dedupe_matches(matches):
+    """Склеивает одинаковые поезд+время+тип+цену (разные CarGroups у одного рейса)."""
+    merged = {}
+    for m in matches:
+        key = (
+            m.get("train"),
+            m.get("departure"),
+            m.get("car_type"),
+            round(float(m.get("price") or 0), 1),
+            m.get("place_type"),
+        )
+        if key not in merged:
+            merged[key] = dict(m)
+            continue
+        cur = merged[key]
+        cur["lower"] = int(cur.get("lower") or 0) + int(m.get("lower") or 0)
+        cur["upper"] = int(cur.get("upper") or 0) + int(m.get("upper") or 0)
+        cur["places"] = int(cur.get("places") or 0) + int(m.get("places") or 0)
+        # оставляем минимальную цену на всякий случай
+        cur["price"] = min(float(cur.get("price") or 0), float(m.get("price") or 0))
+    return list(merged.values())
 
 
 def subscription_date_window(sub, today):
