@@ -80,6 +80,26 @@ margin: 1em;
 text-align: left;
 }
 
+.ticket-info .rzd-link-wrap {
+    display: block;
+    margin-top: 0.75em;
+}
+
+.ticket-info .rzd-link {
+    display: inline-block;
+    color: #fff;
+    background: #d43267;
+    padding: 0.35em 0.75em;
+    border-radius: 0.35em;
+    font-size: 0.85em;
+    text-decoration: none !important;
+}
+
+.ticket-info .rzd-link:hover {
+    background: #8c133a;
+    color: #fff;
+}
+
 .key {
     display: inline-block;
     color: #ff0053;

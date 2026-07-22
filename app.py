@@ -548,6 +548,30 @@ def delete_subscription(sub_id):
     return jsonify({"ok": True})
 
 
+@app.route('/api/rzd-link')
+def rzd_link():
+    city1 = request.args.get('city1')
+    city2 = request.args.get('city2')
+    date_raw = request.args.get('date')
+    if not city1 or not city2 or not date_raw:
+        return jsonify({"error": "city1, city2, date required"}), 400
+
+    try:
+        import rzd_links
+        rzd_links.ensure_node_id_column()
+        if 'T' in date_raw:
+            dep_dt = datetime.strptime(date_raw[:19], "%Y-%m-%dT%H:%M:%S")
+        else:
+            dep_dt = datetime.strptime(date_raw[:10], "%Y-%m-%d")
+        url = rzd_links.build_search_url(int(city1), int(city2), dep_dt)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+    if not url:
+        return jsonify({"error": "unable_to_resolve"}), 404
+    return jsonify({"url": url})
+
+
 if __name__ == '__main__':
     ensure_subscriptions_table()
     try:

@@ -506,7 +506,26 @@ function initSubscriptionsUI() {
         "<span class = 'key'>Поезд: </span> <span class = 'value'> " + trainNumber + "</span>" +
         "<span class = 'key'>Вагон: </span> <span class = 'value'> " + trainVagon + "</span>" +
         "<span class = 'key'>Отправление: </span> <span class = 'value'> " + departureTime + "<span class = 'station'> " + depstation + " </span> </span>" +
-        "<span class = 'key'>Прибытие: </span> <span class = 'value'> " + arrivalTime + "<span class = 'station'> " + arrstation + " </span> </span>"
+        "<span class = 'key'>Прибытие: </span> <span class = 'value'> " + arrivalTime + "<span class = 'station'> " + arrstation + " </span> </span>" +
+        "<span class='rzd-link-wrap'></span>";
+
+        var city1Id = $('#city1-input').attr('data-city-id');
+        var city2Id = $('#city2-input').attr('data-city-id');
+        var linkDate = ticketInfo.departure || '';
+        if (city1Id && city2Id && linkDate) {
+            fetch('/api/rzd-link?city1=' + encodeURIComponent(city1Id) +
+                  '&city2=' + encodeURIComponent(city2Id) +
+                  '&date=' + encodeURIComponent(linkDate))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.url) return;
+                    var wrap = ticketInfoBlock.querySelector('.rzd-link-wrap');
+                    if (!wrap) return;
+                    wrap.innerHTML = '<a class="rzd-link" href="' + data.url +
+                        '" target="_blank" rel="noopener">Открыть на РЖД</a>';
+                })
+                .catch(function() {});
+        }
     } else {
         ticketInfoBlock.textContent = "Выберите день для просмотра информации о билете.";
     }
@@ -565,7 +584,15 @@ function initSubscriptionsUI() {
         o.classList.add("selected");
 
         var dayText = o.querySelector('.day').textContent; // Получаем текст дня из span.day
-        var ticketInfo = JSON.parse(o.getAttribute('data-ticket-info')); // Распарсим JSON
+        var rawTicket = o.getAttribute('data-ticket-info');
+        var ticketInfo = null;
+        if (rawTicket) {
+            try {
+                ticketInfo = JSON.parse(rawTicket);
+            } catch (e) {
+                ticketInfo = null;
+            }
+        }
         selectedDay = new Date(year, month, dayText);
         this.drawHeader(dayText, ticketInfo); // Передаем текст дня и распарсенный JSON
     };
