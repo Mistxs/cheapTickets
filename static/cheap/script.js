@@ -198,6 +198,11 @@ function initStyledSelects() {
                 onChangeWagonType();
             };
         }
+        if ($el.attr('id') === 'sub-notify-from' || $el.attr('id') === 'sub-notify-to') {
+            options.change = function() {
+                updateNotifyHint();
+            };
+        }
         $el.selectmenu(options);
     });
 }
@@ -478,6 +483,7 @@ function initSubscriptionsUI() {
         refreshSelectMenu($('#sub-place-type'));
         refreshSelectMenu($('#sub-notify-from'));
         refreshSelectMenu($('#sub-notify-to'));
+        updateNotifyHint();
     });
 
     $('#sub-list-tab').on('shown.bs.tab', function() {
