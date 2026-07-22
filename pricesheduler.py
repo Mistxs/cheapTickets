@@ -11,6 +11,7 @@ import requests
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 import tgbot
+import rzd_links
 from cities import db_params
 
 RZD_HEADERS = {
@@ -158,6 +159,7 @@ def format_matches(sub, matches):
             date_s = dep_dt.strftime("%d.%m.%Y")
             time_s = dep_dt.strftime("%H:%M")
         except Exception:
+            dep_dt = None
             date_s = _escape(m.get("departure", "—"))
             time_s = "—"
 
@@ -177,8 +179,16 @@ def format_matches(sub, matches):
             "———",
             f"Место: {place} — {car}{qty}",
             f"Цена: <b>{m['price']:.0f}₽</b>",
-            "",
         ])
+
+        if dep_dt is not None:
+            link = rzd_links.build_search_url(
+                sub["dep_station"], sub["arr_station"], dep_dt
+            )
+            if link:
+                blocks.append(f'<a href="{_escape(link)}">Открыть на РЖД</a>')
+
+        blocks.append("")
 
     if len(matches) > 8:
         blocks.append(f"<i>…и ещё {len(matches) - 8}</i>")
@@ -278,6 +288,7 @@ def notify_subscription(sub, matches):
 def run():
     print(f"[{datetime.now()}] checking subscriptions…")
     try:
+        rzd_links.ensure_node_id_column()
         subs = load_active_subscriptions()
     except Exception as exc:
         print(f"DB error: {exc}")

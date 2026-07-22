@@ -550,6 +550,11 @@ def delete_subscription(sub_id):
 
 if __name__ == '__main__':
     ensure_subscriptions_table()
+    try:
+        import rzd_links
+        rzd_links.ensure_node_id_column()
+    except Exception as exc:
+        print(f"node_id column ensure skipped: {exc}")
     app.run(port=5070)
 
 
