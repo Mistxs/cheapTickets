@@ -1,4 +1,5 @@
 APScheduler==3.10.4
+aiogram>=3.4,<4
 blinker==1.6.2
 certifi==2023.7.22
 cffi==1.15.1

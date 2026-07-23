@@ -362,9 +362,6 @@ def run():
     print(f"[{datetime.now()}] checking subscriptions…")
     try:
         rzd_links.ensure_node_id_column()
-        saved = tgbot.harvest_bot_updates()
-        if saved:
-            print(f"harvested tg users: {saved}")
         subs = load_active_subscriptions()
     except Exception as exc:
         print(f"DB error: {exc}")

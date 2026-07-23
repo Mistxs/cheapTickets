@@ -1,4 +1,6 @@
 import os
+import re
+from datetime import date, datetime, time, timedelta
 
 import pymysql
 import requests
@@ -200,9 +202,20 @@ def _place_label(place_type):
 def _hhmm(value, fallback="08:00"):
     if value is None:
         return fallback
+    if isinstance(value, timedelta):
+        total = int(value.total_seconds()) % (24 * 3600)
+        hours, rem = divmod(total, 3600)
+        minutes = rem // 60
+        return f"{hours:02d}:{minutes:02d}"
+    if isinstance(value, time):
+        return f"{value.hour:02d}:{value.minute:02d}"
+    if isinstance(value, datetime):
+        return f"{value.hour:02d}:{value.minute:02d}"
     text = str(value).strip()
-    if len(text) >= 5 and text[2] == ":":
-        return text[:5]
+    # HH:MM or H:MM:SS
+    m = re.match(r"^(\d{1,2}):(\d{2})", text)
+    if m:
+        return f"{int(m.group(1)):02d}:{m.group(2)}"
     return fallback
 
 
@@ -269,4 +282,266 @@ def notify_subscription_change(sub, action="created"):
     except Exception as exc:
         print(f"subscription {action} notify error: {exc}")
         return None
+
+
+# --- DB helpers for bot / shared use ---
+
+
+def serialize_sub_row(row):
+    """Нормализует строку subscriptions в dict для UI/notify."""
+    if not row:
+        return None
+
+    def as_iso_date(value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.date().isoformat()
+        if isinstance(value, date):
+            return value.isoformat()
+        return str(value)[:10]
+
+    return {
+        "id": row.get("id"),
+        "tg_id": row.get("tg_id"),
+        "dep_station": row.get("dep_station"),
+        "arr_station": row.get("arr_station"),
+        "dep_name": row.get("dep_name"),
+        "arr_name": row.get("arr_name"),
+        "car_type": row.get("car_type"),
+        "place_type": row.get("place_type"),
+        "price_min": row.get("price_min"),
+        "price_max": row.get("price_max"),
+        "date_from": as_iso_date(row.get("date_from")),
+        "date_to": as_iso_date(row.get("date_to")),
+        "notify_from": _hhmm(row.get("notify_from"), "08:00"),
+        "notify_to": _hhmm(row.get("notify_to"), "23:00"),
+        "active": bool(row.get("active", 1)),
+    }
+
+
+def lookup_username_by_chat_id(chat_id):
+    if not chat_id:
+        return None
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT username FROM tg_users WHERE chat_id = %s LIMIT 1",
+                (int(chat_id),),
+            )
+            row = cursor.fetchone()
+            return row["username"] if row else None
+    finally:
+        connection.close()
+
+
+def search_cities(query, limit=10):
+    q = str(query or "").strip()
+    if len(q) < 2:
+        return []
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, cyrname
+                FROM cities
+                WHERE cyrname LIKE %s
+                ORDER BY cyrname
+                LIMIT %s
+                """,
+                (f"%{q}%", int(limit)),
+            )
+            return cursor.fetchall() or []
+    finally:
+        connection.close()
+
+
+def get_city_by_id(city_id):
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, cyrname FROM cities WHERE id = %s LIMIT 1",
+                (int(city_id),),
+            )
+            return cursor.fetchone()
+    finally:
+        connection.close()
+
+
+def list_subscriptions_for_user(username):
+    username = normalize_username(username)
+    if not username:
+        return []
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT *
+                FROM subscriptions
+                WHERE LOWER(tg_id) = %s AND active = 1
+                ORDER BY id DESC
+                """,
+                (username,),
+            )
+            rows = cursor.fetchall() or []
+    finally:
+        connection.close()
+    return [serialize_sub_row(r) for r in rows]
+
+
+def get_subscription_for_user(sub_id, username):
+    username = normalize_username(username)
+    if not username:
+        return None
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT *
+                FROM subscriptions
+                WHERE id = %s AND LOWER(tg_id) = %s AND active = 1
+                LIMIT 1
+                """,
+                (int(sub_id), username),
+            )
+            row = cursor.fetchone()
+    finally:
+        connection.close()
+    return serialize_sub_row(row)
+
+
+def create_subscription_record(payload):
+    """
+    payload keys: tg_id, dep_station, arr_station, dep_name, arr_name,
+    car_type, place_type, price_min, price_max, date_from, date_to,
+    notify_from, notify_to
+    date_* : date or 'YYYY-MM-DD'; notify_* : 'HH:MM' or time
+    """
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO subscriptions (
+                    tg_id, dep_station, arr_station, dep_name, arr_name,
+                    car_type, place_type, price_min, price_max, date_from, date_to,
+                    notify_from, notify_to, active
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
+                """,
+                (
+                    normalize_username(payload["tg_id"]) or str(payload["tg_id"]).lstrip("@"),
+                    int(payload["dep_station"]),
+                    int(payload["arr_station"]),
+                    payload.get("dep_name"),
+                    payload.get("arr_name"),
+                    payload["car_type"],
+                    payload["place_type"],
+                    float(payload.get("price_min") or 0),
+                    float(payload["price_max"]),
+                    payload["date_from"],
+                    payload["date_to"],
+                    payload.get("notify_from") or "08:00:00",
+                    payload.get("notify_to") or "23:00:00",
+                ),
+            )
+            new_id = cursor.lastrowid
+        connection.commit()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM subscriptions WHERE id = %s", (new_id,))
+            row = cursor.fetchone()
+    finally:
+        connection.close()
+    return serialize_sub_row(row)
+
+
+def update_subscription_fields(sub_id, username, **fields):
+    """Обновляет разрешённые поля. fields: price_max, notify_from, notify_to, ..."""
+    username = normalize_username(username)
+    allowed = {
+        "price_min",
+        "price_max",
+        "notify_from",
+        "notify_to",
+        "date_from",
+        "date_to",
+        "car_type",
+        "place_type",
+    }
+    updates = {k: v for k, v in fields.items() if k in allowed and v is not None}
+    if not updates or not username:
+        return get_subscription_for_user(sub_id, username)
+
+    sets = []
+    values = []
+    for key, value in updates.items():
+        sets.append(f"{key} = %s")
+        values.append(value)
+    sets.append("last_notify_signature = NULL")
+    values.extend([int(sub_id), username])
+
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                UPDATE subscriptions
+                SET {', '.join(sets)}
+                WHERE id = %s AND LOWER(tg_id) = %s AND active = 1
+                """,
+                tuple(values),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+    return get_subscription_for_user(sub_id, username)
+
+
+def soft_delete_subscription(sub_id, username):
+    username = normalize_username(username)
+    if not username:
+        return False
+    connection = pymysql.connect(**db_params)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE subscriptions
+                SET active = 0
+                WHERE id = %s AND LOWER(tg_id) = %s AND active = 1
+                """,
+                (int(sub_id), username),
+            )
+            changed = cursor.rowcount > 0
+        connection.commit()
+    finally:
+        connection.close()
+    return changed
+
+
+def parse_dmy_date(text):
+    text = str(text or "").strip()
+    for fmt in ("%d-%m-%Y", "%d.%m.%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    raise ValueError(f"invalid date: {text}")
+
+
+def parse_date_range_text(text):
+    """'ДД-ММ-ГГГГ — ДД-ММ-ГГГГ' или через пробел/дефис."""
+    raw = str(text or "").strip()
+    for sep in ("—", "–", " - ", " — ", " to ", ",", ";"):
+        if sep in raw:
+            left, right = raw.split(sep, 1)
+            return parse_dmy_date(left.strip()), parse_dmy_date(right.strip())
+    parts = raw.split()
+    if len(parts) == 2:
+        return parse_dmy_date(parts[0]), parse_dmy_date(parts[1])
+    raise ValueError("expected two dates")
 
