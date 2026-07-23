@@ -238,6 +238,10 @@ def format_subscription_notice(sub, action="created"):
 
     lines = [
         f"<b>{title}</b>",
+    ]
+    if sub.get("id") is not None:
+        lines.append(f"№{_escape_html(sub.get('id'))}")
+    lines.extend([
         f"<b>{route}</b>",
         "",
         f"Даты: {date_from} — {date_to}",
@@ -247,9 +251,7 @@ def format_subscription_notice(sub, action="created"):
         f"Оповещения: {_escape_html(_notify_window_label(sub.get('notify_from'), sub.get('notify_to')))}",
         "",
         "<i>Бот будет искать билеты в этом окне и напишет, когда появятся подходящие.</i>",
-    ]
-    if sub.get("id") is not None:
-        lines.insert(2, f"№{_escape_html(sub.get('id'))}")
+    ])
     return "\n".join(lines)
 
 
