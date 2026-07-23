@@ -4,7 +4,7 @@ import html
 import json
 import time
 from collections import defaultdict
-from datetime import datetime, time, timedelta
+from datetime import datetime, time as dtime, timedelta
 
 import pymysql
 import requests
@@ -33,15 +33,15 @@ def as_date(value):
     return datetime.strptime(str(value), "%Y-%m-%d").date()
 
 
-def as_time(value, fallback=time(8, 0)):
+def as_time(value, fallback=dtime(8, 0)):
     if value is None:
         return fallback
     if isinstance(value, timedelta):
         total = int(value.total_seconds()) % (24 * 3600)
         hours, rem = divmod(total, 3600)
         minutes = rem // 60
-        return time(hours, minutes)
-    if isinstance(value, time):
+        return dtime(hours, minutes)
+    if isinstance(value, dtime):
         return value.replace(second=0, microsecond=0)
     if isinstance(value, datetime):
         return value.time().replace(second=0, microsecond=0)
@@ -58,8 +58,8 @@ def in_notify_window(sub, now=None):
     """True if current local time is inside subscription notify_from..notify_to."""
     now = now or datetime.now()
     current = now.time().replace(second=0, microsecond=0)
-    start = as_time(sub.get("notify_from"), time(8, 0))
-    end = as_time(sub.get("notify_to"), time(23, 0))
+    start = as_time(sub.get("notify_from"), dtime(8, 0))
+    end = as_time(sub.get("notify_to"), dtime(23, 0))
     if start == end:
         return True
     if start < end:
