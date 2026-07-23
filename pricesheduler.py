@@ -69,6 +69,7 @@ def in_notify_window(sub, now=None):
 
 
 def train_on_day(date, cityfrom, cityto):
+    import applog
     url = "https://ticket.rzd.ru/apib2b/p/Railway/V1/Search/TrainPricing?service_provider=B2B_RZD"
     payload = json.dumps({
         "Origin": str(cityfrom),
@@ -80,9 +81,25 @@ def train_on_day(date, cityfrom, cityto):
         "GetByLocalTime": True,
         "SpecialPlacesDemand": "StandardPlacesAndForDisabledPersons",
     })
-    response = requests.post(url, headers=RZD_HEADERS, data=payload, timeout=45)
-    response.raise_for_status()
-    return response.json()
+    t0 = time.monotonic()
+    try:
+        response = requests.post(url, headers=RZD_HEADERS, data=payload, timeout=45)
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        response.raise_for_status()
+        data = response.json()
+        trains = len(data.get("Trains") or [])
+        applog.rzd_logger().info(
+            "checker %s->%s date=%s status=%s trains=%s %sms",
+            cityfrom, cityto, date, response.status_code, trains, elapsed_ms,
+        )
+        return data
+    except Exception as exc:
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        applog.rzd_logger().error(
+            "checker %s->%s date=%s FAIL %sms err=%s",
+            cityfrom, cityto, date, elapsed_ms, exc,
+        )
+        raise
 
 
 def match_cars(trains_payload, car_type, place_type, price_min, price_max):
@@ -337,38 +354,50 @@ def match_subscription_from_cache(sub, window, day_cache):
 
 
 def notify_subscription(sub, matches):
+    import applog
     if not matches:
         print(f"  sub#{sub['id']}: no matches")
+        applog.checker_logger().info("sub#%s no matches", sub["id"])
         return
 
     signature = matches_signature(matches)
     if signature == (sub.get("last_notify_signature") or ""):
         print(f"  sub#{sub['id']}: same matches, skip notify")
+        applog.checker_logger().info("sub#%s skip same signature", sub["id"])
         return
 
     text = format_matches(sub, matches)
     try:
         resp = tgbot.notify_tickets(sub["tg_id"], text)
         print(f"  sub#{sub['id']}: notify {resp.status_code} → {sub['tg_id']}")
+        applog.checker_logger().info(
+            "sub#%s notify status=%s user=%s matches=%s",
+            sub["id"], resp.status_code, sub["tg_id"], len(matches),
+        )
         if resp.ok:
             update_notify_signature(sub["id"], signature)
         else:
             print(f"  telegram error: {resp.text[:300]}")
     except Exception as exc:
         print(f"  notify failed: {exc}")
+        applog.checker_logger().error("sub#%s notify failed: %s", sub["id"], exc)
 
 
 def run():
+    import applog
     print(f"[{datetime.now()}] checking subscriptions…")
+    applog.checker_logger().info("run start")
     try:
         rzd_links.ensure_node_id_column()
         subs = load_active_subscriptions()
     except Exception as exc:
         print(f"DB error: {exc}")
+        applog.checker_logger().error("DB error: %s", exc)
         return
 
     if not subs:
         print("no active subscriptions")
+        applog.checker_logger().info("no active subscriptions")
         return
 
     now = datetime.now()
@@ -390,8 +419,13 @@ def run():
         f"active: {len(subs)}, current: {len(current)}, "
         f"outside hours: {outside_hours}, expired: {expired}"
     )
+    applog.checker_logger().info(
+        "active=%s current=%s outside=%s expired=%s",
+        len(subs), len(current), outside_hours, expired,
+    )
     if not current:
         print("nothing to check right now — skip RZD")
+        applog.checker_logger().info("skip RZD — nothing current")
         return
 
     by_direction = defaultdict(list)
@@ -399,6 +433,8 @@ def run():
         key = (int(sub["dep_station"]), int(sub["arr_station"]))
         by_direction[key].append((sub, window))
 
+    notified = 0
+    matched_subs = 0
     for (dep, arr), group in by_direction.items():
         dates_needed = set()
         for _, window in group:
@@ -411,7 +447,18 @@ def run():
         day_cache = fetch_direction_days(dep, arr, dates_needed)
         for sub, window in group:
             matches = match_subscription_from_cache(sub, window, day_cache)
+            if matches:
+                matched_subs += 1
+            before_sig = sub.get("last_notify_signature")
             notify_subscription(sub, matches)
+            # crude: if had matches and not skipped, count as attempt
+            if matches and matches_signature(matches) != (before_sig or ""):
+                notified += 1
+
+    applog.checker_logger().info(
+        "run done matched_subs=%s notify_attempts=%s",
+        matched_subs, notified,
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Backoffice{% endblock %} · CheapTickets</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='cheap/css/backoffice.css') }}">
+</head>
+<body class="bo-body">
+  {% if current_user.is_authenticated %}
+  <header class="bo-top">
+    <a class="bo-brand" href="{{ url_for('backoffice.dashboard') }}">CT Backoffice</a>
+    <nav class="bo-nav">
+      <a href="{{ url_for('backoffice.dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('backoffice.subscriptions_list') }}">Подписки</a>
+      <a href="{{ url_for('backoffice.logs_page') }}">Логи</a>
+    </nav>
+    <form method="post" action="{{ url_for('backoffice.logout') }}" class="bo-logout">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit">Выйти</button>
+    </form>
+  </header>
+  {% endif %}
+  <main class="bo-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="bo-flash">
+          {% for cat, msg in messages %}
+            <li class="bo-flash__item bo-flash__item--{{ cat }}">{{ msg }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

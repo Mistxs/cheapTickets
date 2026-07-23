@@ -168,6 +168,8 @@ def subscription_payload_from_request(data, partial=False):
 
 
 def rzdfind(date,cityfrom, cityto):
+  import time as _time
+  import applog
   url = "https://ticket.rzd.ru/apib2b/p/Railway/V1/Search/TrainPricing?service_provider=B2B_RZD"
 
   payload = json.dumps({
@@ -195,8 +197,24 @@ def rzdfind(date,cityfrom, cityto):
     'Cookie': 'session-cookie=177670e7b0b2a17dbd64334d6940ac72715fcb65feb24b902687c9746d324c6084e21755e85917975c092188951a8ad2'
   }
 
-  response = requests.request("POST", url, headers=headers, data=payload).json()
-  return response
+  t0 = _time.monotonic()
+  try:
+    response = requests.request("POST", url, headers=headers, data=payload, timeout=45)
+    elapsed_ms = int((_time.monotonic() - t0) * 1000)
+    data = response.json()
+    trains = len(data.get("Trains") or []) if isinstance(data, dict) else 0
+    applog.rzd_logger().info(
+      "web %s->%s date=%s status=%s trains=%s %sms",
+      cityfrom, cityto, date, response.status_code, trains, elapsed_ms,
+    )
+    return data
+  except Exception as exc:
+    elapsed_ms = int((_time.monotonic() - t0) * 1000)
+    applog.rzd_logger().error(
+      "web %s->%s date=%s FAIL %sms err=%s",
+      cityfrom, cityto, date, elapsed_ms, exc,
+    )
+    raise
 def getprice(data, current_date_str):
     min_prices = {}
     for item in data["Trains"]:
@@ -244,6 +262,10 @@ def getprice(data, current_date_str):
 
 
 app = Flask(__name__, static_url_path='/cheaptickets/static')
+
+from backoffice import init_backoffice
+init_backoffice(app)
+
 
 @app.route('/')
 def index():

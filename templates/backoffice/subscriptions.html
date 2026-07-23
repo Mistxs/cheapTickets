@@ -1,0 +1,42 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Подписки{% endblock %}
+{% block content %}
+<h1>Подписки</h1>
+
+<form class="bo-filters" method="get">
+  <label>tg_id <input type="text" name="tg_id" value="{{ filters.tg_id }}" placeholder="mistxs"></label>
+  <label>active
+    <select name="active">
+      <option value="" {% if filters.active == '' %}selected{% endif %}>все</option>
+      <option value="1" {% if filters.active == '1' %}selected{% endif %}>active</option>
+      <option value="0" {% if filters.active == '0' %}selected{% endif %}>inactive</option>
+    </select>
+  </label>
+  <label>маршрут <input type="text" name="q" value="{{ filters.q }}" placeholder="Москва"></label>
+  <button type="submit" class="bo-btn">Фильтр</button>
+</form>
+
+<table class="bo-table">
+  <thead>
+    <tr>
+      <th>#</th><th>user</th><th>маршрут</th><th>условия</th><th>даты</th><th>окно</th><th>active</th><th>last notify</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in items %}
+    <tr>
+      <td><a href="{{ url_for('backoffice.subscription_edit', sub_id=s.id) }}">{{ s.id }}</a></td>
+      <td>@{{ s.tg_id }}</td>
+      <td>{{ s.dep_name }} → {{ s.arr_name }}</td>
+      <td>{{ s.car_type }} / {{ s.place_type }} · {{ s.price_min|int }}–{{ s.price_max|int }}₽</td>
+      <td>{{ s.date_from }} … {{ s.date_to }}</td>
+      <td>{{ s.notify_from }}–{{ s.notify_to }}</td>
+      <td>{% if s.active %}yes{% else %}no{% endif %}</td>
+      <td>{{ s.last_notified_at or '—' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="bo-muted">Пусто</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

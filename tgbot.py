@@ -147,7 +147,8 @@ def resolve_chat_id(tg_id):
     return '@' + username
 
 
-def send_telegram_message(chat_id, message, token=None, parse_mode='HTML'):
+def send_telegram_message(chat_id, message, token=None, parse_mode='HTML', action='message'):
+    import applog
     token = token or BOT_TOKEN
     ensure_tg_users_table()
     resolved = resolve_chat_id(chat_id)
@@ -156,6 +157,9 @@ def send_telegram_message(chat_id, message, token=None, parse_mode='HTML'):
             ok = False
             status_code = 400
             text = '{"ok":false,"description":"empty chat id"}'
+        applog.telegram_logger().warning(
+            "action=%s chat=%s FAIL resolve empty", action, chat_id
+        )
         return _Resp()
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -166,11 +170,21 @@ def send_telegram_message(chat_id, message, token=None, parse_mode='HTML'):
         'parse_mode': parse_mode,
     }
     response = requests.post(url, data=payload, timeout=30, proxies=_proxies())
+    if response.ok:
+        applog.telegram_logger().info(
+            "action=%s chat=%s resolved=%s status=%s",
+            action, chat_id, resolved, response.status_code,
+        )
+    else:
+        applog.telegram_logger().error(
+            "action=%s chat=%s resolved=%s status=%s body=%s",
+            action, chat_id, resolved, response.status_code, response.text[:300],
+        )
     return response
 
 
 def notify_tickets(chat_id, info):
-    return send_telegram_message(chat_id, info)
+    return send_telegram_message(chat_id, info, action='ticket')
 
 
 def _escape_html(value):
@@ -272,7 +286,7 @@ def notify_subscription_change(sub, action="created"):
     """Шлёт пользователю сводку по подписке. Ошибки Telegram не пробрасывает."""
     try:
         text = format_subscription_notice(sub, action=action)
-        resp = send_telegram_message(sub.get("tg_id"), text)
+        resp = send_telegram_message(sub.get("tg_id"), text, action=action)
         if getattr(resp, "ok", None) is False or getattr(resp, "status_code", 500) >= 400:
             print(
                 f"subscription {action} notify failed for {sub.get('tg_id')}: "

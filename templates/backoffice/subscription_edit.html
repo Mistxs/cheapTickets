@@ -1,0 +1,65 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Подписка #{{ sub.id }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('backoffice.subscriptions_list') }}">← к списку</a></p>
+<h1>Подписка #{{ sub.id }}</h1>
+<p class="bo-muted">@{{ sub.tg_id }} · {{ sub.dep_name }} → {{ sub.arr_name }} · created {{ sub.created_at }} · last notify {{ sub.last_notified_at or '—' }}</p>
+
+<form method="post" class="bo-card bo-form">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="action" value="save">
+
+  <div class="bo-grid bo-grid--2">
+    <label>price_min <input type="number" step="1" name="price_min" value="{{ sub.price_min|int }}"></label>
+    <label>price_max <input type="number" step="1" name="price_max" value="{{ sub.price_max|int }}"></label>
+    <label>date_from <input type="date" name="date_from" value="{{ sub.date_from }}"></label>
+    <label>date_to <input type="date" name="date_to" value="{{ sub.date_to }}"></label>
+    <label>notify_from <input type="time" name="notify_from" value="{{ sub.notify_from }}"></label>
+    <label>notify_to <input type="time" name="notify_to" value="{{ sub.notify_to }}"></label>
+    <label>car_type
+      <select name="car_type">
+        {% for v in ['ПЛАЦ','КУПЕ','СИД','ANY'] %}
+        <option value="{{ v }}" {% if sub.car_type == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>place_type
+      <select name="place_type">
+        {% for v in ['lower','upper','any'] %}
+        <option value="{{ v }}" {% if sub.place_type == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>active
+      <select name="active">
+        <option value="1" {% if sub.active %}selected{% endif %}>active</option>
+        <option value="0" {% if not sub.active %}selected{% endif %}>inactive</option>
+      </select>
+    </label>
+  </div>
+
+  <label class="bo-check">
+    <input type="checkbox" name="notify_tg" value="1"> уведомить пользователя в Telegram после сохранения
+  </label>
+
+  <div class="bo-row">
+    <button type="submit" class="bo-btn">Сохранить</button>
+  </div>
+</form>
+
+<div class="bo-row">
+  {% if sub.active %}
+  <form method="post" onsubmit="return confirm('Деактивировать #{{ sub.id }}?')">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="delete">
+    <button type="submit" class="bo-btn bo-btn--danger">Soft-delete</button>
+  </form>
+  {% else %}
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="restore">
+    <button type="submit" class="bo-btn">Restore</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

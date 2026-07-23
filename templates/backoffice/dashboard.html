@@ -1,0 +1,52 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<section class="bo-grid bo-grid--4">
+  <article class="bo-stat"><span>Active</span><strong>{{ metrics.active }}</strong></article>
+  <article class="bo-stat"><span>Inactive</span><strong>{{ metrics.inactive }}</strong></article>
+  <article class="bo-stat"><span>Users</span><strong>{{ metrics.users }}</strong></article>
+  <article class="bo-stat"><span>Notifies 24h</span><strong>{{ metrics.notified_24h }}</strong></article>
+</section>
+
+<section class="bo-card bo-actions">
+  <h2>Чекер</h2>
+  <p class="bo-muted">Запуск <code>pricesheduler.py --once</code> в фоне. Результат — во вкладке логов Checker.</p>
+  <form method="post" action="{{ url_for('backoffice.run_checker') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="bo-btn">Запустить чекер сейчас</button>
+  </form>
+</section>
+
+<section class="bo-card">
+  <h2>Systemd</h2>
+  <div class="bo-grid bo-grid--3">
+    {% for s in services %}
+    <article class="bo-service {% if s.ok %}is-ok{% else %}is-bad{% endif %}">
+      <h3>{{ s.unit }}</h3>
+      <p><b>{{ s.active }}</b> / {{ s.sub }}</p>
+      <p class="bo-muted">PID {{ s.pid or '—' }} · restarts {{ s.restarts or '—' }}</p>
+      <p class="bo-muted">{{ s.since or '' }}</p>
+      {% if s.error %}<p class="bo-error">{{ s.error }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="bo-card">
+  <h2>Top routes (active)</h2>
+  {% if metrics.top_routes %}
+  <table class="bo-table">
+    <thead><tr><th>Маршрут</th><th>Подписок</th></tr></thead>
+    <tbody>
+      {% for r in metrics.top_routes %}
+      <tr><td>{{ r.dep_name }} → {{ r.arr_name }}</td><td>{{ r.c }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="bo-muted">Нет данных</p>
+  {% endif %}
+</section>
+{% endblock %}

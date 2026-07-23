@@ -1,0 +1,19 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<section class="bo-login">
+  <h1>Backoffice</h1>
+  <p class="bo-muted">Служебный вход CheapTickets</p>
+  {% if error %}<p class="bo-error">{{ error }}</p>{% endif %}
+  <form method="post" class="bo-card">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label>Логин
+      <input type="text" name="username" autocomplete="username" required autofocus>
+    </label>
+    <label>Пароль
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit" class="bo-btn">Войти</button>
+  </form>
+</section>
+{% endblock %}

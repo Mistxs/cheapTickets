@@ -1,0 +1,20 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Логи{% endblock %}
+{% block content %}
+<h1>Логи</h1>
+
+<nav class="bo-tabs">
+  {% for key, label in sources.items() %}
+  <a class="{% if source == key %}is-active{% endif %}"
+     href="{{ url_for('backoffice.logs_page', source=key, lines=lines) }}">{{ label }}</a>
+  {% endfor %}
+</nav>
+
+<form class="bo-filters" method="get">
+  <input type="hidden" name="source" value="{{ source }}">
+  <label>строк <input type="number" name="lines" value="{{ lines }}" min="50" max="2000"></label>
+  <button type="submit" class="bo-btn">Обновить</button>
+</form>
+
+<pre class="bo-log">{{ body }}</pre>
+{% endblock %}
