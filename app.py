@@ -517,7 +517,14 @@ def create_subscription():
     finally:
         connection.close()
 
-    return jsonify(serialize_subscription(row)), 201
+    serialized = serialize_subscription(row)
+    try:
+        import tgbot
+        tgbot.notify_subscription_change(serialized, action="created")
+    except Exception as exc:
+        print(f"create subscription tg notify skipped: {exc}")
+
+    return jsonify(serialized), 201
 
 
 @app.route('/api/subscriptions/<int:sub_id>', methods=['PUT'])
@@ -584,7 +591,14 @@ def update_subscription(sub_id):
     finally:
         connection.close()
 
-    return jsonify(serialize_subscription(row))
+    serialized = serialize_subscription(row)
+    try:
+        import tgbot
+        tgbot.notify_subscription_change(serialized, action="updated")
+    except Exception as exc:
+        print(f"update subscription tg notify skipped: {exc}")
+
+    return jsonify(serialized)
 
 
 @app.route('/api/subscriptions/<int:sub_id>', methods=['DELETE'])

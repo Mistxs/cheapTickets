@@ -169,3 +169,102 @@ def send_telegram_message(chat_id, message, token=None, parse_mode='HTML'):
 
 def notify_tickets(chat_id, info):
     return send_telegram_message(chat_id, info)
+
+
+def _escape_html(value):
+    return (
+        str(value if value is not None else "")
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def _car_label(car_type):
+    return {
+        "ПЛАЦ": "плацкарт",
+        "КУПЕ": "купе",
+        "СИД": "сидячее",
+        "ANY": "любой вагон",
+    }.get(str(car_type or "").upper(), str(car_type or "—"))
+
+
+def _place_label(place_type):
+    return {
+        "lower": "нижнее",
+        "upper": "верхнее",
+        "any": "любое",
+    }.get(str(place_type or "").lower(), str(place_type or "любое"))
+
+
+def _hhmm(value, fallback="08:00"):
+    if value is None:
+        return fallback
+    text = str(value).strip()
+    if len(text) >= 5 and text[2] == ":":
+        return text[:5]
+    return fallback
+
+
+def _notify_window_label(notify_from, notify_to):
+    start = _hhmm(notify_from, "08:00")
+    end = _hhmm(notify_to, "23:00")
+    if start == end:
+        return "круглосуточно"
+    if start < end:
+        return f"{start}–{end} МСК"
+    return f"{start} → ночь → {end} МСК"
+
+
+def format_subscription_notice(sub, action="created"):
+    """HTML-текст о создании/изменении подписки для Telegram."""
+    title = {
+        "created": "✅ Подписка создана",
+        "updated": "✏️ Подписка обновлена",
+        "deleted": "🗑 Подписка удалена",
+    }.get(action, "✅ Подписка")
+
+    route = (
+        f"{_escape_html(sub.get('dep_name'))} → {_escape_html(sub.get('arr_name'))}"
+    )
+    date_from = _escape_html(sub.get("date_from") or "—")
+    date_to = _escape_html(sub.get("date_to") or "—")
+    price_min = sub.get("price_min")
+    price_max = sub.get("price_max")
+    try:
+        price_line = f"{float(price_min):.0f}–{float(price_max):.0f} ₽"
+    except Exception:
+        price_line = f"{price_min}–{price_max} ₽"
+
+    lines = [
+        f"<b>{title}</b>",
+        f"<b>{route}</b>",
+        "",
+        f"Даты: {date_from} — {date_to}",
+        f"Вагон: {_escape_html(_car_label(sub.get('car_type')))}",
+        f"Место: {_escape_html(_place_label(sub.get('place_type')))}",
+        f"Цена: {price_line}",
+        f"Оповещения: {_escape_html(_notify_window_label(sub.get('notify_from'), sub.get('notify_to')))}",
+        "",
+        "<i>Бот будет искать билеты в этом окне и напишет, когда появятся подходящие.</i>",
+    ]
+    if sub.get("id") is not None:
+        lines.insert(2, f"№{_escape_html(sub.get('id'))}")
+    return "\n".join(lines)
+
+
+def notify_subscription_change(sub, action="created"):
+    """Шлёт пользователю сводку по подписке. Ошибки Telegram не пробрасывает."""
+    try:
+        text = format_subscription_notice(sub, action=action)
+        resp = send_telegram_message(sub.get("tg_id"), text)
+        if getattr(resp, "ok", None) is False or getattr(resp, "status_code", 500) >= 400:
+            print(
+                f"subscription {action} notify failed for {sub.get('tg_id')}: "
+                f"{getattr(resp, 'status_code', '?')} {getattr(resp, 'text', '')[:200]}"
+            )
+        return resp
+    except Exception as exc:
+        print(f"subscription {action} notify error: {exc}")
+        return None
+
