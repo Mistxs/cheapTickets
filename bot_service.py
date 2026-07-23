@@ -401,10 +401,14 @@ async def edit_notify_start(callback: CallbackQuery):
     )
 
 
-@router.callback_query(F.data.regexp(r"^enp:(\d+):(.+)$"))
+@router.callback_query(F.data.startswith("enp:"))
 async def edit_notify_preset(callback: CallbackQuery):
     await callback.answer()
-    _, sub_id_s, key = callback.data.split(":", 2)
+    parts = callback.data.split(":")
+    if len(parts) < 3:
+        await callback.message.answer("Некорректные данные.")
+        return
+    sub_id_s, key = parts[1], parts[2]
     preset = NOTIFY_PRESETS.get(key)
     if not preset:
         await callback.message.answer("Неизвестный пресет.")
